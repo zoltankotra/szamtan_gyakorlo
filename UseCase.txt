@@ -1,0 +1,19 @@
+@startuml
+left to right direction
+Diák as D
+Rendszer as R
+(Beállítások) as K1
+(Feladatok generálása) as K2
+(Feladatok megoldása) as M1
+(Megoldás) as K3
+(Ellenőrzés) as K4
+D -right-> K1
+D -right-> M1
+K1 -right-> R
+R -right-> K2
+R -right-> K4
+R -right-> K3
+K2 ..> M1
+K3 ..> M1
+M1 ..> K4
+@enduml
