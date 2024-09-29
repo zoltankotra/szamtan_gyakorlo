@@ -16,7 +16,7 @@
 
 ## Eredmények
 - **Dátum**: 2024.09.28
-- **Böngészők**: Chrome, Firefox
+- **Böngészők**: Chrome, Firefox, Edge
 - **Eredmények**: 
   - Chrome: Minden funkció működik.
   - Firefox: Minden funkció működik.
