@@ -21,7 +21,7 @@
   - Chrome: Minden funkció működik.
   - Firefox: Minden funkció működik.
   - Edge: Minden funkció működik.
-  -Arc: Nem működik sajnos. :(
+  - Arc: Nem működik sajnos. :(
 ## Hibák
 - **Arcban nem fut le a projekt.**
 
