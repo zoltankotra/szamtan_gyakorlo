@@ -15,7 +15,7 @@
 - **Elvárt eredmény**: A válasznak helyesnek kell lennie.
 
 ## Eredmények
-- **Dátum**: 2024.09.28
+- **Dátum**: 2024.09.29.
 - **Böngészők**: Chrome, Firefox, Edge
 - **Eredmények**: 
   - Chrome: Minden funkció működik.
