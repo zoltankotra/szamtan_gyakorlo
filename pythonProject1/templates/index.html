@@ -1,0 +1,28 @@
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Számtan Gyakorló</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/index.css') }}">
+</head>
+<body>
+    <h1>Számtan Gyakorló Beállítások</h1>
+    <div class="container">
+        <form method="POST">
+            <label for="num_problems">Hány feladatot szeretnél?</label>
+            <input type="number" id="num_problems" name="num_problems" min="1" value="5" required>
+
+            <label for="operation">Válaszd ki a műveletet:</label>
+            <select id="operation" name="operation" required>
+                <option value="+">Összeadás</option>
+                <option value="-">Kivonás</option>
+                <option value="*">Szorzás</option>
+                <option value="/">Osztás</option>
+                <option value="random">Random mindenféle</option>
+            </select>
+
+            <button type="submit">Feladatok Generálása</button>
+        </form>
+    </div>
+</body>
+</html>

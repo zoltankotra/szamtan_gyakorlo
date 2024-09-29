@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feladatok</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/problems.css') }}">
+
+</head>
+<body>
+    <h1>Oldd meg a feladatokat!</h1>
+    <div class="container">
+        <form action="/check" method="POST">
+            {% for problem in problems %}
+            <p>{{ problem }}</p>
+            <input type="number" name="answers" placeholder="Írd be a válaszod" required>
+            {% endfor %}
+            <button type="submit">Ellenőrzés</button>
+        </form>
+    </div>
+</body>
+</html>

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eredmények</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/results.css') }}">
+
+</head>
+<body>
+    <h1>Eredmények</h1>
+    <div class="container">
+        <ul>
+            {% for result in results %}
+            <li>{{ result }}</li>
+            {% endfor %}
+        </ul>
+
+        <p>Összes hibás válasz: {{ incorrect_count }}</p>  <!-- Hibás feladatok száma -->
+        <p><strong>{{ message }}</strong></p>  <!-- Üzenet megjelenítése -->
+
+        <a href="/">Új feladatok generálása</a>
+    </div>
+</body>
+</html>
