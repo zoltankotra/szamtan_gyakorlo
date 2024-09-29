@@ -20,6 +20,7 @@
 - **Eredmények**: 
   - Chrome: Minden funkció működik.
   - Firefox: Minden funkció működik.
+  - Edge: Minden funkció működik.
 
 ## Hibák
 - **Nincs hiba észlelve.**
