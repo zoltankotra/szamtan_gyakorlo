@@ -20,5 +20,5 @@
     | -- | ---- | ----------- |
     | K1 | Kezdeti beállítások | A felhasználó be tudja állítani a megoldani kívánt feladatok jellegét és mennyiségét. A beállítások után egy gombbal el tudja indítani a feladatok generálását. |
     | K2 | Feladatok | Feladatok véletlenszerű generálása a megadott beállítások alapján. |
-    | K3 | Megoldások | A felhasználó az egyes megjelenő feladatok után meg tud adni választ. |
+    | K3 | Megoldások | A felhasználó az egyes megjelenő feladatok után meg tud adni választ. Minden feladat után egy szövegdobozba fogja ezeket megadni. |
     | K4 | Ellenőrzés | A rendszer visszajelzést ad a megadott válasz helyességéről, illetve kijelzi a helyes választ. A program értékeli, hogy a megadott válaszok között hányra adott hibásat a felhasználó. |
