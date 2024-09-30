@@ -9,9 +9,10 @@
 ### 1. Űrlapok kitöltése
 - **Lépések**:
   1. Nyisd meg a projektet (pl. Pycharmban,Visual Studio...).
-  2. Navigálj az URL-re miután lefuttatjuk a terminálban "python app.py" paranccsal: http://localhost:5000
-  3. Töltsd ki az űrlapokat a válaszokkal.
-  4. Kattints a "Küldés" gombra.
+  2. Installálja a flask-et a terminálba beírt paranccsal ami az alábbi: pip install flask
+  3. Navigálj az URL-re miután lefuttatjuk a terminálban a "python app.py" parancsot: http://localhost:5000
+  4. Töltsd ki az űrlapokat a válaszokkal.
+  5. Kattints a "Küldés" gombra.
 - **Elvárt eredmény**: A válaszoknak helyesnek kell lennie.
 
 ## Eredmények
