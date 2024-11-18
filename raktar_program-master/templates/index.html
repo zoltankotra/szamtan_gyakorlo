@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <title>Raktárnyilvántartó</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav>
+        <a href="{{ url_for('products') }}">Termékek</a>
+        <a href="{{ url_for('customers') }}">Ügyfelek</a>
+        <a href="{{ url_for('orders') }}">Megrendelések</a>
+    </nav>
+    <h1>Üdvözöljük a Raktárnyilvántartóban!</h1>
+    <p>Válassza ki a kívánt oldalt a navigációs menüből.</p>
+</body>
+</html>

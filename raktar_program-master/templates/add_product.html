@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <title>Új termék hozzáadása</title>
+</head>
+<body>
+    <nav>
+        <a href="{{ url_for('index') }}">Főoldal</a>
+        <a href="{{ url_for('products') }}">Termékek</a>
+    </nav>
+
+    <h1>Új termék hozzáadása</h1>
+
+    <form action="{{ url_for('add_product') }}" method="POST">
+        <label for="cikkszam">Cikkszám:</label>
+        <input type="text" id="cikkszam" name="cikkszam" required><br>
+
+        <label for="nev">Termék neve:</label>
+        <input type="text" id="nev" name="nev" required><br>
+
+        <label for="mennyiseg">Mennyiség:</label>
+        <input type="number" id="mennyiseg" name="mennyiseg" required><br>
+
+        <label for="ar">Ár:</label>
+        <input type="number" id="ar" name="ar" required><br>
+
+        <label for="suly">Súly:</label>
+        <input type="number" id="suly" name="suly" required><br>
+
+        <label for="lokacio">Lokáció:</label>
+        <input type="text" id="lokacio" name="lokacio" required><br>
+
+        <label for="kategoria">Kategória:</label>
+        <input type="text" id="kategoria" name="kategoria" required><br>
+
+        <button type="submit">Termék hozzáadása</button>
+    </form>
+</body>
+</html>
