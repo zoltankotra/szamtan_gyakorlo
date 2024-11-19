@@ -26,11 +26,11 @@ def create_database():
 
     # Raktáron lévő termékek tábla
     c.execute('''CREATE TABLE IF NOT EXISTS stock (
-                    id INTEGER PRIMARY KEY,
-                    cikkszam TEXT,
-                    lokacio TEXT,
-                    mennyiseg INTEGER,
-                    FOREIGN KEY(cikkszam) REFERENCES products(cikkszam))''')
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    cikkszam TEXT NOT NULL,
+    mennyiseg INTEGER NOT NULL,
+    lokacio TEXT NOT NULL,
+    FOREIGN KEY (cikkszam) REFERENCES products(cikkszam));''')
 
     # Ügyfelek tábla
     c.execute('''CREATE TABLE IF NOT EXISTS customers (
@@ -52,17 +52,19 @@ def create_database():
                     FOREIGN KEY(customer_id) REFERENCES customers(id),
                     FOREIGN KEY(cikkszam) REFERENCES products(cikkszam))''')
 
+
+
     conn.commit()
     conn.close()
 
 # A database létrehozása, ha még nem létezik
-#create_database()
+create_database()
 
 # Figyelem: Ez törli a 'products' táblát, és minden adatot!
 def drop_table():
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute('DROP TABLE IF EXISTS products')
+    c.execute('DROP TABLE IF EXISTS products,orders,customers,stock')
     conn.commit()
     conn.close()
 
@@ -81,6 +83,22 @@ def products():
     products = conn.execute('SELECT * FROM products').fetchall()
     conn.close()
     return render_template('products.html', products=products)
+
+@app.route('/customers')
+def customers():
+    conn = get_db_connection()
+    customers = conn.execute('SELECT * FROM customers').fetchall()
+    conn.close()
+    return render_template('customers.html', customers=customers)
+
+@app.route('/orders')
+def orders():
+    conn = get_db_connection()
+    orders = conn.execute('''SELECT orders.id, customers.nev, orders.cikkszam, orders.mennyiseg, orders.status 
+                            FROM orders
+                            JOIN customers ON orders.customer_id = customers.id''').fetchall()
+    conn.close()
+    return render_template('orders.html', orders=orders)
 
 @app.route('/add_product', methods=['GET', 'POST'])
 def add_product():
@@ -110,40 +128,6 @@ def add_product():
         return redirect(url_for('products'))
 
     return render_template('add_product.html')
-
-
-@app.route('/delete_product/<int:product_id>', methods=['POST'])
-def delete_product(product_id):
-    conn = get_db_connection()
-
-    # Töröljük a terméket a products táblából az adott id alapján
-    conn.execute('DELETE FROM products WHERE id = ?', (product_id,))
-
-    # Eltávolítjuk a terméket a stock táblából is, ha létezik
-    conn.execute('DELETE FROM stock WHERE cikkszam = (SELECT cikkszam FROM products WHERE id = ?)', (product_id,))
-
-    conn.commit()
-    conn.close()
-
-    flash("A termék sikeresen törölve lett!", "success")
-    return redirect(url_for('products'))
-
-
-@app.route('/customers')
-def customers():
-    conn = get_db_connection()
-    customers = conn.execute('SELECT * FROM customers').fetchall()
-    conn.close()
-    return render_template('customers.html', customers=customers)
-
-@app.route('/orders')
-def orders():
-    conn = get_db_connection()
-    orders = conn.execute('''SELECT orders.id, customers.nev, orders.cikkszam, orders.mennyiseg, orders.status 
-                            FROM orders
-                            JOIN customers ON orders.customer_id = customers.id''').fetchall()
-    conn.close()
-    return render_template('orders.html', orders=orders)
 
 
 @app.route('/add_customer', methods=['GET', 'POST'])
@@ -196,48 +180,31 @@ def stock():
     return render_template('stock.html', stock=stock)
 
 
-@app.route('/add_stock', methods=['GET', 'POST'])
-def add_stock():
+@app.route('/add_to_stock', methods=['GET', 'POST'])
+def add_to_stock():
     if request.method == 'POST':
         cikkszam = request.form['cikkszam']
+        mennyiseg = request.form['mennyiseg']
         lokacio = request.form['lokacio']
-        mennyiseg = int(request.form['mennyiseg'])
 
-        conn = get_db_connection()
-
-        # Ellenőrizzük, hogy létezik-e már a cikkszám és lokáció kombináció a stock táblában
-        existing_stock = conn.execute('SELECT * FROM stock WHERE cikkszam = ? AND lokacio = ?',
-                                      (cikkszam, lokacio)).fetchone()
-
-        if existing_stock:
-            # Ha létezik, növeljük a mennyiséget
-            new_mennyiseg = existing_stock['mennyiseg'] + mennyiseg
-            conn.execute('UPDATE stock SET mennyiseg = ? WHERE cikkszam = ? AND lokacio = ?',
-                         (new_mennyiseg, cikkszam, lokacio))
-            flash("A mennyiség frissítve lett!", "success")
+        # Ellenőrizzük, hogy a cikkszám létezik a termékek táblájában
+        product = db.execute('SELECT * FROM products WHERE cikkszam = ?', (cikkszam,)).fetchone()
+        if product:
+            db.execute('INSERT INTO stock (cikkszam, mennyiseg, lokacio) VALUES (?, ?, ?)',
+                       (cikkszam, mennyiseg, lokacio))
+            db.commit()
+            flash('A termék hozzáadva a raktárhoz!', 'success')
         else:
-            # Ha nem létezik, új rekordot adunk hozzá
-            conn.execute('INSERT INTO stock (cikkszam, lokacio, mennyiseg) VALUES (?, ?, ?)',
-                         (cikkszam, lokacio, mennyiseg))
-            flash("Új termék hozzáadva a raktárhoz!", "success")
-
-        conn.commit()
-        conn.close()
+            flash('A megadott cikkszám nem található a termékek között!', 'error')
         return redirect(url_for('stock'))
 
-    return render_template('add_stock.html')
+    return render_template('add_to_stock.html')
 
-
-@app.route('/delete_stock/<int:stock_id>', methods=['POST'])
-def delete_stock(stock_id):
-    conn = get_db_connection()
-
-    # Töröljük a rekordot a stock táblából az adott id alapján
-    conn.execute('DELETE FROM stock WHERE id = ?', (stock_id,))
-    conn.commit()
-    conn.close()
-
-    flash("A rekord sikeresen törölve lett!", "success")
+@app.route('/delete_from_stock/<int:id>', methods=['POST'])
+def delete_from_stock(id):
+    db.execute('DELETE FROM stock WHERE id = ?', (id,))
+    db.commit()
+    flash('A termék sikeresen törölve lett a raktárról.', 'success')
     return redirect(url_for('stock'))
 
 
