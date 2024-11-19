@@ -82,22 +82,6 @@ def products():
     conn.close()
     return render_template('products.html', products=products)
 
-@app.route('/customers')
-def customers():
-    conn = get_db_connection()
-    customers = conn.execute('SELECT * FROM customers').fetchall()
-    conn.close()
-    return render_template('customers.html', customers=customers)
-
-@app.route('/orders')
-def orders():
-    conn = get_db_connection()
-    orders = conn.execute('''SELECT orders.id, customers.nev, orders.cikkszam, orders.mennyiseg, orders.status 
-                            FROM orders
-                            JOIN customers ON orders.customer_id = customers.id''').fetchall()
-    conn.close()
-    return render_template('orders.html', orders=orders)
-
 @app.route('/add_product', methods=['GET', 'POST'])
 def add_product():
     if request.method == 'POST':
@@ -126,6 +110,40 @@ def add_product():
         return redirect(url_for('products'))
 
     return render_template('add_product.html')
+
+
+@app.route('/delete_product/<int:product_id>', methods=['POST'])
+def delete_product(product_id):
+    conn = get_db_connection()
+
+    # Töröljük a terméket a products táblából az adott id alapján
+    conn.execute('DELETE FROM products WHERE id = ?', (product_id,))
+
+    # Eltávolítjuk a terméket a stock táblából is, ha létezik
+    conn.execute('DELETE FROM stock WHERE cikkszam = (SELECT cikkszam FROM products WHERE id = ?)', (product_id,))
+
+    conn.commit()
+    conn.close()
+
+    flash("A termék sikeresen törölve lett!", "success")
+    return redirect(url_for('products'))
+
+
+@app.route('/customers')
+def customers():
+    conn = get_db_connection()
+    customers = conn.execute('SELECT * FROM customers').fetchall()
+    conn.close()
+    return render_template('customers.html', customers=customers)
+
+@app.route('/orders')
+def orders():
+    conn = get_db_connection()
+    orders = conn.execute('''SELECT orders.id, customers.nev, orders.cikkszam, orders.mennyiseg, orders.status 
+                            FROM orders
+                            JOIN customers ON orders.customer_id = customers.id''').fetchall()
+    conn.close()
+    return render_template('orders.html', orders=orders)
 
 
 @app.route('/add_customer', methods=['GET', 'POST'])
