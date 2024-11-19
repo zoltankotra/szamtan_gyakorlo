@@ -24,6 +24,9 @@
                 <th>Termék neve</th>
                 <th>Mennyiség</th>
                 <th>Ár</th>
+                <th>Súly</th> <!-- Új oszlop -->
+                <th>Lokáció</th> <!-- Új oszlop -->
+                <th>Kategória</th> <!-- Új oszlop -->
                 <th>Akciók</th>
             </tr>
         </thead>
@@ -34,6 +37,9 @@
                 <td>{{ product['nev'] }}</td>
                 <td>{{ product['mennyiseg'] }}</td>
                 <td>{{ product['ar'] }}</td>
+                <td>{{ product['suly'] }}</td> <!-- Új oszlop értékének megjelenítése -->
+                <td>{{ product['lokacio'] }}</td> <!-- Új oszlop értékének megjelenítése -->
+                <td>{{ product['kategoria'] }}</td> <!-- Új oszlop értékének megjelenítése -->
                 <td>
                     <!-- Módosítás és törlés gombok -->
                     <a href="{{ url_for('edit_product', id=product['id']) }}"><button>Szerkesztés</button></a>

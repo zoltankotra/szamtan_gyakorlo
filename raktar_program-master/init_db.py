@@ -1,3 +1,5 @@
+
+
 import sqlite3
 
 conn = sqlite3.connect('database.db')
@@ -10,7 +12,7 @@ c.execute('''CREATE TABLE IF NOT EXISTS products (
                 nev TEXT,
                 mennyiseg INTEGER,
                 ar REAL,
-                suly REAL,
+                suly DOUBLE,
                 lokacio TEXT,
                 kategoria TEXT)''')
 

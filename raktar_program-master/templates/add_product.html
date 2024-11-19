@@ -12,6 +12,17 @@
 
     <h1>Új termék hozzáadása</h1>
 
+    <!-- Flash üzenetek megjelenítése -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul>
+            {% for category, message in messages %}
+                <li class="{{ category }}">{{ message }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
     <form action="{{ url_for('add_product') }}" method="POST">
         <label for="cikkszam">Cikkszám:</label>
         <input type="text" id="cikkszam" name="cikkszam" required><br>

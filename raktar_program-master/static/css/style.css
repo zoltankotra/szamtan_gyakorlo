@@ -34,3 +34,15 @@ th, td {
     border: 1px solid #ddd;
     text-align: left;
 }
+
+/* Hibás üzenet */
+.error {
+    color: red;
+    font-weight: bold;
+}
+
+/* Sikeres üzenet */
+.success {
+    color: green;
+    font-weight: bold;
+}
