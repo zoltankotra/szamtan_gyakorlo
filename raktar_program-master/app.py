@@ -177,5 +177,33 @@ def stock():
     conn.close()
     return render_template('stock.html', stock=stock)
 
+@app.route('/add_stock', methods=['GET', 'POST'])
+def add_stock():
+    if request.method == 'POST':
+        cikkszam = request.form['cikkszam']
+        lokacio = request.form['lokacio']
+        mennyiseg = request.form['mennyiseg']
+
+        # Ellenőrizzük, hogy a cikkszám már létezik a 'products' táblában
+        conn = get_db_connection()
+        existing_product = conn.execute('SELECT * FROM products WHERE cikkszam = ?', (cikkszam,)).fetchone()
+
+        if not existing_product:
+            # Ha a cikkszám nem létezik, hibaüzenetet adunk
+            flash("A megadott cikkszám nem található a termékek között!", "error")
+            return redirect(url_for('stock'))
+
+        # Ha létezik, hozzáadjuk az új raktári adatot
+        conn.execute('INSERT INTO stock (cikkszam, lokacio, mennyiseg) VALUES (?, ?, ?)',
+                     (cikkszam, lokacio, mennyiseg))
+        conn.commit()
+        conn.close()
+
+        flash("Termék hozzáadva a raktárhoz!", "success")
+        return redirect(url_for('stock'))
+
+    return render_template('add_stock.html')
+
+
 if __name__ == '__main__':
     app.run(debug=True)
