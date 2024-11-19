@@ -10,8 +10,32 @@
         <a href="{{ url_for('index') }}">Főoldal</a>
         <a href="{{ url_for('products') }}">Termékek</a>
         <a href="{{ url_for('orders') }}">Megrendelések</a>
+        <a href="{{ url_for('stock') }}">Raktáron</a>
     </nav>
     <h1>Ügyfelek</h1>
-    <!-- Ügyfelek listája -->
+    <table>
+        <thead>
+            <tr>
+                <th>Neve</th>
+                <th>Ir. szám</th>
+                <th>Város</th>
+                <th>Utca</th>
+                <th>Házszám</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for customer in customers %}
+            <tr>
+                <td>{{ customer.nev }}</td>
+                <td>{{ customer.iranyitoszam }}</td>
+                <td>{{ customer.varos }}</td>
+                <td>{{ customer.utca }}</td>
+                <td>{{ customer.hazszam }}</td>
+                <td>{{ customer.email }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </body>
 </html>

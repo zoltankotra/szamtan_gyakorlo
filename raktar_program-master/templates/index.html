@@ -7,9 +7,11 @@
 </head>
 <body>
     <nav>
+        <a href="{{ url_for('index') }}">Főoldal</a>
         <a href="{{ url_for('products') }}">Termékek</a>
         <a href="{{ url_for('customers') }}">Ügyfelek</a>
         <a href="{{ url_for('orders') }}">Megrendelések</a>
+        <a href="{{ url_for('stock') }}">Raktáron</a>
     </nav>
     <h1>Üdvözöljük a Raktárnyilvántartóban!</h1>
     <p>Válassza ki a kívánt oldalt a navigációs menüből.</p>

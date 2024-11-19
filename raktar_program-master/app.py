@@ -1,9 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for,flash
+from flask import Flask, render_template, request, redirect, url_for, flash
 import sqlite3
-import os
-
 
 app = Flask(__name__)
+app.secret_key = 's3cr3t'
 
 # Adatbázis kapcsolat
 def get_db_connection():
@@ -11,13 +10,64 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
-@app.route('/success')
-def success():
-    return render_template('success.html')
+# Ügyfelek, Megrendelések és egyéb táblák létrehozása
+def create_database():
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
 
-@app.route('/failure')
-def failure():
-    return render_template('failure.html')
+    # Termékek tábla
+    c.execute('''CREATE TABLE IF NOT EXISTS products (
+                    id INTEGER PRIMARY KEY,
+                    cikkszam TEXT UNIQUE,
+                    nev TEXT,
+                    ar REAL,
+                    suly REAL,
+                    kategoria TEXT)''')
+
+    # Raktáron lévő termékek tábla
+    c.execute('''CREATE TABLE IF NOT EXISTS stock (
+                    id INTEGER PRIMARY KEY,
+                    cikkszam TEXT,
+                    lokacio TEXT,
+                    mennyiseg INTEGER,
+                    FOREIGN KEY(cikkszam) REFERENCES products(cikkszam))''')
+
+    # Ügyfelek tábla
+    c.execute('''CREATE TABLE IF NOT EXISTS customers (
+                    id INTEGER PRIMARY KEY,
+                    nev TEXT,
+                    iranyitoszam TEXT,
+                    varos TEXT,
+                    utca TEXT,
+                    hazszam TEXT,
+                    email TEXT)''')
+
+    # Megrendelések tábla
+    c.execute('''CREATE TABLE IF NOT EXISTS orders (
+                    id INTEGER PRIMARY KEY,
+                    customer_id INTEGER,
+                    cikkszam TEXT,
+                    mennyiseg INTEGER,
+                    status TEXT,
+                    FOREIGN KEY(customer_id) REFERENCES customers(id),
+                    FOREIGN KEY(cikkszam) REFERENCES products(cikkszam))''')
+
+    conn.commit()
+    conn.close()
+
+# A database létrehozása, ha még nem létezik
+#create_database()
+
+# Figyelem: Ez törli a 'products' táblát, és minden adatot!
+def drop_table():
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute('DROP TABLE IF EXISTS products')
+    conn.commit()
+    conn.close()
+
+# Csak akkor használd, ha a tábla törlésére van szükséged.
+#drop_table()
 
 
 @app.route('/')
@@ -39,14 +89,12 @@ def customers():
     conn.close()
     return render_template('customers.html', customers=customers)
 
-# Megrendelések route hozzáadása
 @app.route('/orders')
 def orders():
     conn = get_db_connection()
-    orders = conn.execute('''SELECT o.id, c.nev, p.nev AS product_name, o.mennyiseg, o.cikkszam, o.leellenorozve, o.lezarva
-                             FROM orders o
-                             JOIN customers c ON o.customer_id = c.id
-                             JOIN products p ON o.product_id = p.id''').fetchall()
+    orders = conn.execute('''SELECT orders.id, customers.nev, orders.cikkszam, orders.mennyiseg, orders.status 
+                            FROM orders
+                            JOIN customers ON orders.customer_id = customers.id''').fetchall()
     conn.close()
     return render_template('orders.html', orders=orders)
 
@@ -55,83 +103,79 @@ def add_product():
     if request.method == 'POST':
         cikkszam = request.form['cikkszam']
         nev = request.form['nev']
-        mennyiseg = request.form['mennyiseg']
         ar = request.form['ar']
         suly = request.form['suly']
-        lokacio = request.form['lokacio']
         kategoria = request.form['kategoria']
 
-        conn = sqlite3.connect('database.db')
-        c = conn.cursor()
+        # Ellenőrizzük, hogy a cikkszám már létezik-e
+        conn = get_db_connection()
+        existing_product = conn.execute('SELECT * FROM products WHERE cikkszam = ?', (cikkszam,)).fetchone()
 
-        # Ellenőrizzük, hogy létezik-e már termék azonos cikkszámmal és lokációval
-        c.execute('''SELECT * FROM products WHERE cikkszam = ? AND lokacio = ?''', (cikkszam, lokacio))
-        product = c.fetchone()
+        if existing_product:
+            # Ha létezik, hibaüzenetet adunk
+            flash("A cikkszám már létezik. Nem lehet új terméket hozzáadni!", "error")
+            return redirect(url_for('products'))
 
-        if product:
-            # Ha létezik ilyen termék, akkor növeljük a mennyiséget
-            new_quantity = product[2] + int(mennyiseg)
-            c.execute('''UPDATE products SET mennyiseg = ? WHERE cikkszam = ? AND lokacio = ?''', (new_quantity, cikkszam, lokacio))
-        else:
-            # Ha nem létezik ilyen termék, új rekordot veszünk fel
-            c.execute('''INSERT INTO products (cikkszam, nev, mennyiseg, ar, suly, lokacio, kategoria) 
-                         VALUES (?, ?, ?, ?, ?, ?, ?)''', (cikkszam, nev, mennyiseg, ar, suly, lokacio, kategoria))
-
+        # Ha nem létezik, hozzáadjuk az új terméket
+        conn.execute('INSERT INTO products (cikkszam, nev, ar, suly, kategoria) VALUES (?, ?, ?, ?, ?)',
+                     (cikkszam, nev, ar, suly, kategoria))
         conn.commit()
         conn.close()
 
-        # Sikeres hozzáadás után irányítjuk a megfelelő oldalra
-        return render_template('success.html', message="Termék sikeresen hozzáadva!")
+        flash("Termék hozzáadva!", "success")
+        return redirect(url_for('products'))
 
     return render_template('add_product.html')
 
-# Termék szerkesztése route
-@app.route('/edit_product/<int:id>', methods=['GET', 'POST'])
-def edit_product(id):
-    conn = sqlite3.connect('database.db')
-    c = conn.cursor()
 
-    # Termék lekérése az id alapján
-    c.execute('SELECT * FROM products WHERE id = ?', (id,))
-    product = c.fetchone()
-
+@app.route('/add_customer', methods=['GET', 'POST'])
+def add_customer():
     if request.method == 'POST':
-        # Csak a termék neve változhat
         nev = request.form['nev']
+        iranyitoszam = request.form['iranyitoszam']
+        varos = request.form['varos']
+        utca = request.form['utca']
+        hazszam = request.form['hazszam']
+        email = request.form['email']
 
-        # Ellenőrizzük, hogy létezik-e már olyan termék ugyanazzal a cikkszámmal és lokációval, de más névvel
-        cikkszam = product[1]
-        lokacio = product[6]
+        conn = get_db_connection()
+        conn.execute('INSERT INTO customers (nev, iranyitoszam, varos, utca, hazszam, email) VALUES (?, ?, ?, ?, ?, ?)',
+                     (nev, iranyitoszam, varos, utca, hazszam, email))
+        conn.commit()
+        conn.close()
 
-        c.execute('SELECT * FROM products WHERE cikkszam = ? AND lokacio = ?', (cikkszam, lokacio))
-        existing_product = c.fetchone()
+        flash("Ügyfél hozzáadva!", "success")
+        return redirect(url_for('customers'))
 
-        if existing_product:
-            # Ha létezik termék ugyanazzal a cikkszámmal és lokációval, csak a nevet módosítjuk
-            c.execute('UPDATE products SET nev = ? WHERE id = ?', (nev, id))
-            conn.commit()
-            conn.close()
-            return render_template('success.html', message="Termék sikeresen módosítva!")
-        else:
-            # Ha nem található ilyen termék, akkor visszairányítjuk a failure oldalra
-            conn.close()
-            return render_template('failure.html', message="Hiba történt a módosítás közben!")
+    return render_template('add_customer.html')
 
-    return render_template('edit_product.html', product=product)
+@app.route('/add_order', methods=['GET', 'POST'])
+def add_order():
+    if request.method == 'POST':
+        customer_id = request.form['customer_id']
+        cikkszam = request.form['cikkszam']
+        mennyiseg = request.form['mennyiseg']
+        status = request.form['status']
 
+        conn = get_db_connection()
+        conn.execute('INSERT INTO orders (customer_id, cikkszam, mennyiseg, status) VALUES (?, ?, ?, ?)',
+                     (customer_id, cikkszam, mennyiseg, status))
+        conn.commit()
+        conn.close()
 
-# Termék törlésének route-ja
-@app.route('/delete_product/<int:id>', methods=('POST',))
-def delete_product(id):
+        flash("Megrendelés hozzáadva!", "success")
+        return redirect(url_for('orders'))
+
+    return render_template('add_order.html')
+
+@app.route('/stock')
+def stock():
     conn = get_db_connection()
-    conn.execute('DELETE FROM products WHERE id = ?', (id,))
-    conn.commit()
+    stock = conn.execute('''SELECT stock.id, products.cikkszam, stock.lokacio, stock.mennyiseg 
+                            FROM stock
+                            JOIN products ON stock.cikkszam = products.cikkszam''').fetchall()
     conn.close()
-
-    return redirect(url_for('products'))
+    return render_template('stock.html', stock=stock)
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
-#Megvan a termék hozzáadása adatokkal.Módositásnál is odakell figyelni a megeggyező adatokra...Törlés gomb mukodik

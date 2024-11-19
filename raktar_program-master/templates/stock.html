@@ -2,33 +2,31 @@
 <html lang="hu">
 <head>
     <meta charset="UTF-8">
-    <title>Megrendelések</title>
+    <title>Raktáron Lévő Termékek</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
     <nav>
-        <a href="{{ url_for('index') }}">Főoldal</a>
+          <a href="{{ url_for('index') }}">Főoldal</a>
         <a href="{{ url_for('products') }}">Termékek</a>
         <a href="{{ url_for('customers') }}">Ügyfelek</a>
-        <a href="{{ url_for('stock') }}">Raktáron</a>
+        <a href="{{ url_for('orders') }}">Megrendelések</a>
     </nav>
-    <h1>Megrendelések</h1>
+    <h1>Raktáron Lévő Termékek</h1>
     <table>
         <thead>
             <tr>
-                <th>Ügyfél neve</th>
                 <th>Cikkszám</th>
+                <th>Lokáció</th>
                 <th>Mennyiség</th>
-                <th>Státusz</th>
             </tr>
         </thead>
         <tbody>
-            {% for order in orders %}
+            {% for item in stock %}
             <tr>
-                <td>{{ order.nev }}</td>
-                <td>{{ order.cikkszam }}</td>
-                <td>{{ order.mennyiseg }}</td>
-                <td>{{ order.status }}</td>
+                <td>{{ item.cikkszam }}</td>
+                <td>{{ item.lokacio }}</td>
+                <td>{{ item.mennyiseg }}</td>
             </tr>
             {% endfor %}
         </tbody>
