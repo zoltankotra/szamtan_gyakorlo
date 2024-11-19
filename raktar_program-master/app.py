@@ -177,32 +177,50 @@ def stock():
     conn.close()
     return render_template('stock.html', stock=stock)
 
+
 @app.route('/add_stock', methods=['GET', 'POST'])
 def add_stock():
     if request.method == 'POST':
         cikkszam = request.form['cikkszam']
         lokacio = request.form['lokacio']
-        mennyiseg = request.form['mennyiseg']
+        mennyiseg = int(request.form['mennyiseg'])
 
-        # Ellenőrizzük, hogy a cikkszám már létezik a 'products' táblában
         conn = get_db_connection()
-        existing_product = conn.execute('SELECT * FROM products WHERE cikkszam = ?', (cikkszam,)).fetchone()
 
-        if not existing_product:
-            # Ha a cikkszám nem létezik, hibaüzenetet adunk
-            flash("A megadott cikkszám nem található a termékek között!", "error")
-            return redirect(url_for('stock'))
+        # Ellenőrizzük, hogy létezik-e már a cikkszám és lokáció kombináció a stock táblában
+        existing_stock = conn.execute('SELECT * FROM stock WHERE cikkszam = ? AND lokacio = ?',
+                                      (cikkszam, lokacio)).fetchone()
 
-        # Ha létezik, hozzáadjuk az új raktári adatot
-        conn.execute('INSERT INTO stock (cikkszam, lokacio, mennyiseg) VALUES (?, ?, ?)',
-                     (cikkszam, lokacio, mennyiseg))
+        if existing_stock:
+            # Ha létezik, növeljük a mennyiséget
+            new_mennyiseg = existing_stock['mennyiseg'] + mennyiseg
+            conn.execute('UPDATE stock SET mennyiseg = ? WHERE cikkszam = ? AND lokacio = ?',
+                         (new_mennyiseg, cikkszam, lokacio))
+            flash("A mennyiség frissítve lett!", "success")
+        else:
+            # Ha nem létezik, új rekordot adunk hozzá
+            conn.execute('INSERT INTO stock (cikkszam, lokacio, mennyiseg) VALUES (?, ?, ?)',
+                         (cikkszam, lokacio, mennyiseg))
+            flash("Új termék hozzáadva a raktárhoz!", "success")
+
         conn.commit()
         conn.close()
-
-        flash("Termék hozzáadva a raktárhoz!", "success")
         return redirect(url_for('stock'))
 
     return render_template('add_stock.html')
+
+
+@app.route('/delete_stock/<int:stock_id>', methods=['POST'])
+def delete_stock(stock_id):
+    conn = get_db_connection()
+
+    # Töröljük a rekordot a stock táblából az adott id alapján
+    conn.execute('DELETE FROM stock WHERE id = ?', (stock_id,))
+    conn.commit()
+    conn.close()
+
+    flash("A rekord sikeresen törölve lett!", "success")
+    return redirect(url_for('stock'))
 
 
 if __name__ == '__main__':
