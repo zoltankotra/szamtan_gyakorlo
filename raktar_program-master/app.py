@@ -10,68 +10,6 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
-# Ügyfelek, Megrendelések és egyéb táblák létrehozása
-def create_database():
-    conn = sqlite3.connect('database.db')
-    c = conn.cursor()
-
-    # Termékek tábla
-    c.execute('''CREATE TABLE IF NOT EXISTS products (
-                    id INTEGER PRIMARY KEY,
-                    cikkszam TEXT UNIQUE,
-                    nev TEXT,
-                    ar REAL,
-                    suly REAL,
-                    kategoria TEXT)''')
-
-    # Raktáron lévő termékek tábla
-    c.execute('''CREATE TABLE IF NOT EXISTS stock (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    cikkszam TEXT NOT NULL,
-    mennyiseg INTEGER NOT NULL,
-    lokacio TEXT NOT NULL,
-    FOREIGN KEY (cikkszam) REFERENCES products(cikkszam));''')
-
-    # Ügyfelek tábla
-    c.execute('''CREATE TABLE IF NOT EXISTS customers (
-                    id INTEGER PRIMARY KEY,
-                    nev TEXT,
-                    iranyitoszam TEXT,
-                    varos TEXT,
-                    utca TEXT,
-                    hazszam TEXT,
-                    email TEXT)''')
-
-    # Megrendelések tábla
-    c.execute('''CREATE TABLE IF NOT EXISTS orders (
-                    id INTEGER PRIMARY KEY,
-                    customer_id INTEGER,
-                    cikkszam TEXT,
-                    mennyiseg INTEGER,
-                    status TEXT,
-                    FOREIGN KEY(customer_id) REFERENCES customers(id),
-                    FOREIGN KEY(cikkszam) REFERENCES products(cikkszam))''')
-
-
-
-    conn.commit()
-    conn.close()
-
-# A database létrehozása, ha még nem létezik
-create_database()
-
-# Figyelem: Ez törli a 'products' táblát, és minden adatot!
-def drop_table():
-    conn = sqlite3.connect('database.db')
-    c = conn.cursor()
-    c.execute('DROP TABLE IF EXISTS products,orders,customers,stock')
-    conn.commit()
-    conn.close()
-
-# Csak akkor használd, ha a tábla törlésére van szükséged.
-#drop_table()
-
-
 @app.route('/')
 @app.route('/index')
 def index():
@@ -83,22 +21,6 @@ def products():
     products = conn.execute('SELECT * FROM products').fetchall()
     conn.close()
     return render_template('products.html', products=products)
-
-@app.route('/customers')
-def customers():
-    conn = get_db_connection()
-    customers = conn.execute('SELECT * FROM customers').fetchall()
-    conn.close()
-    return render_template('customers.html', customers=customers)
-
-@app.route('/orders')
-def orders():
-    conn = get_db_connection()
-    orders = conn.execute('''SELECT orders.id, customers.nev, orders.cikkszam, orders.mennyiseg, orders.status 
-                            FROM orders
-                            JOIN customers ON orders.customer_id = customers.id''').fetchall()
-    conn.close()
-    return render_template('orders.html', orders=orders)
 
 @app.route('/add_product', methods=['GET', 'POST'])
 def add_product():
@@ -130,9 +52,35 @@ def add_product():
     return render_template('add_product.html')
 
 
+@app.route('/delete_product/<int:product_id>', methods=['POST'])
+def delete_product(product_id):
+    conn = get_db_connection()
+
+    # Töröljük a terméket a products táblából az adott id alapján
+    conn.execute('DELETE FROM products WHERE id = ?', (product_id,))
+
+    # Eltávolítjuk a terméket a stock táblából is, ha létezik
+    conn.execute('DELETE FROM stock WHERE cikkszam = (SELECT cikkszam FROM products WHERE id = ?)', (product_id,))
+
+    conn.commit()
+    conn.close()
+
+    flash("A termék sikeresen törölve lett!", "success")
+    return redirect(url_for('products'))
+
+
+@app.route('/customers', methods=['GET'])
+def customers():
+    conn = get_db_connection()
+    customers = conn.execute('SELECT * FROM customers').fetchall()
+    conn.close()
+    return render_template('customers.html', customers=customers)
+
+
 @app.route('/add_customer', methods=['GET', 'POST'])
 def add_customer():
     if request.method == 'POST':
+        # Új ügyfél hozzáadása
         nev = request.form['nev']
         iranyitoszam = request.form['iranyitoszam']
         varos = request.form['varos']
@@ -141,34 +89,46 @@ def add_customer():
         email = request.form['email']
 
         conn = get_db_connection()
-        conn.execute('INSERT INTO customers (nev, iranyitoszam, varos, utca, hazszam, email) VALUES (?, ?, ?, ?, ?, ?)',
-                     (nev, iranyitoszam, varos, utca, hazszam, email))
-        conn.commit()
+        # Ellenőrizzük, hogy az email cím már létezik-e
+        existing_customer = conn.execute('SELECT * FROM customers WHERE email = ?', (email,)).fetchone()
+        if existing_customer:
+            flash('Ez az email cím már létezik!', 'error')
+        else:
+            conn.execute(
+                'INSERT INTO customers (nev, iranyitoszam, varos, utca, hazszam, email) VALUES (?, ?, ?, ?, ?, ?)',
+                (nev, iranyitoszam, varos, utca, hazszam, email))
+            conn.commit()
+            flash('Ügyfél sikeresen hozzáadva!', 'success')
+
         conn.close()
+        return redirect(url_for('customers'))  # Visszairányítjuk a fő ügyféloldalra
 
-        flash("Ügyfél hozzáadva!", "success")
-        return redirect(url_for('customers'))
+    return render_template('add_customer.html')  # Ha GET kérés, akkor a formot mutatjuk
 
-    return render_template('add_customer.html')
-
-@app.route('/add_order', methods=['GET', 'POST'])
-def add_order():
-    if request.method == 'POST':
-        customer_id = request.form['customer_id']
-        cikkszam = request.form['cikkszam']
-        mennyiseg = request.form['mennyiseg']
-        status = request.form['status']
-
-        conn = get_db_connection()
-        conn.execute('INSERT INTO orders (customer_id, cikkszam, mennyiseg, status) VALUES (?, ?, ?, ?)',
-                     (customer_id, cikkszam, mennyiseg, status))
+@app.route('/delete_customer/<email>', methods=['POST'])
+def delete_customer(email):
+    conn = get_db_connection()
+    customer = conn.execute('SELECT * FROM customers WHERE email = ?', (email,)).fetchone()
+    if customer:
+        conn.execute('DELETE FROM customers WHERE email = ?', (email,))
         conn.commit()
-        conn.close()
+        flash('Ügyfél sikeresen törölve!', 'success')
+    else:
+        flash('A törlés nem sikerült, ügyfél nem található!', 'error')
 
-        flash("Megrendelés hozzáadva!", "success")
-        return redirect(url_for('orders'))
+    conn.close()
+    return redirect(url_for('customers'))
 
-    return render_template('add_order.html')
+
+@app.route('/orders')
+def orders():
+    conn = get_db_connection()
+    orders = conn.execute('''SELECT orders.id, customers.nev, orders.cikkszam, orders.mennyiseg, orders.status 
+                            FROM orders
+                            JOIN customers ON orders.customer_id = customers.id''').fetchall()
+    conn.close()
+    return render_template('orders.html', orders=orders)
+
 
 @app.route('/stock')
 def stock():
@@ -180,31 +140,58 @@ def stock():
     return render_template('stock.html', stock=stock)
 
 
-@app.route('/add_to_stock', methods=['GET', 'POST'])
-def add_to_stock():
+@app.route('/add_stock', methods=['GET', 'POST'])
+def add_stock():
     if request.method == 'POST':
         cikkszam = request.form['cikkszam']
-        mennyiseg = request.form['mennyiseg']
         lokacio = request.form['lokacio']
+        mennyiseg = int(request.form['mennyiseg'])
 
-        # Ellenőrizzük, hogy a cikkszám létezik a termékek táblájában
-        product = db.execute('SELECT * FROM products WHERE cikkszam = ?', (cikkszam,)).fetchone()
-        if product:
-            db.execute('INSERT INTO stock (cikkszam, mennyiseg, lokacio) VALUES (?, ?, ?)',
-                       (cikkszam, mennyiseg, lokacio))
-            db.commit()
-            flash('A termék hozzáadva a raktárhoz!', 'success')
+        conn = get_db_connection()
+
+        # Ellenőrizzük, hogy létezik-e a cikkszám a products táblában
+        product_exists = conn.execute('SELECT * FROM products WHERE cikkszam = ?', (cikkszam,)).fetchone()
+
+        if not product_exists:
+            # Ha a cikkszám nem létezik a termékek táblában
+            flash("Hibás cikkszám! Ez a termék nem létezik.", "error")
+            conn.close()
+            return redirect(url_for('stock'))
+
+        # Ellenőrizzük, hogy létezik-e már a cikkszám és lokáció kombináció a stock táblában
+        existing_stock = conn.execute('SELECT * FROM stock WHERE cikkszam = ? AND lokacio = ?',
+                                      (cikkszam, lokacio)).fetchone()
+
+        if existing_stock:
+            # Ha létezik, növeljük a mennyiséget
+            new_mennyiseg = existing_stock['mennyiseg'] + mennyiseg
+            conn.execute('UPDATE stock SET mennyiseg = ? WHERE cikkszam = ? AND lokacio = ?',
+                         (new_mennyiseg, cikkszam, lokacio))
+            flash("A mennyiség frissítve lett!", "success")
         else:
-            flash('A megadott cikkszám nem található a termékek között!', 'error')
+            # Ha nem létezik, új rekordot adunk hozzá
+            conn.execute('INSERT INTO stock (cikkszam, lokacio, mennyiseg) VALUES (?, ?, ?)',
+                         (cikkszam, lokacio, mennyiseg))
+            flash("Új termék hozzáadva a raktárhoz!", "success")
+
+        conn.commit()
+        conn.close()
         return redirect(url_for('stock'))
 
-    return render_template('add_to_stock.html')
+    return render_template('add_stock.html')
 
-@app.route('/delete_from_stock/<int:id>', methods=['POST'])
-def delete_from_stock(id):
-    db.execute('DELETE FROM stock WHERE id = ?', (id,))
-    db.commit()
-    flash('A termék sikeresen törölve lett a raktárról.', 'success')
+
+
+@app.route('/delete_stock/<int:stock_id>', methods=['POST'])
+def delete_stock(stock_id):
+    conn = get_db_connection()
+
+    # Töröljük a rekordot a stock táblából az adott id alapján
+    conn.execute('DELETE FROM stock WHERE id = ?', (stock_id,))
+    conn.commit()
+    conn.close()
+
+    flash("A rekord sikeresen törölve lett!", "success")
     return redirect(url_for('stock'))
 
 

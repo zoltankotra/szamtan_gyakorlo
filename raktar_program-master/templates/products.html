@@ -34,6 +34,7 @@
                 <th>Ár</th>
                 <th>Súly</th>
                 <th>Kategória</th>
+                <th>Törlés</th> <!-- Törlés oszlop hozzáadása -->
             </tr>
         </thead>
         <tbody>
@@ -44,6 +45,12 @@
                 <td>{{ product.ar }}</td>
                 <td>{{ product.suly }}</td>
                 <td>{{ product.kategoria }}</td>
+                <td>
+                    <!-- Törlés gomb, ami POST kérést küld -->
+                    <form action="{{ url_for('delete_product', product_id=product.id) }}" method="post">
+                        <button type="submit">Törlés</button>
+                    </form>
+                </td>
             </tr>
             {% endfor %}
         </tbody>

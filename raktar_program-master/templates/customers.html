@@ -12,7 +12,27 @@
         <a href="{{ url_for('orders') }}">Megrendelések</a>
         <a href="{{ url_for('stock') }}">Raktáron</a>
     </nav>
+
     <h1>Ügyfelek</h1>
+
+    <!-- Hibaüzenet megjelenítése -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <ul>
+        {% for category, message in messages %}
+            <li class="{{ category }}">{{ message }}</li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+    {% endwith %}
+
+    <!-- Gomb, amely átnavigál az új ügyfél hozzáadására -->
+    <a href="{{ url_for('add_customer') }}">
+        <button>Új ügyfél hozzáadása</button>
+    </a>
+
+    <!-- Ügyfelek lista -->
+    <h2>Ügyfelek listája</h2>
     <table>
         <thead>
             <tr>
@@ -22,6 +42,7 @@
                 <th>Utca</th>
                 <th>Házszám</th>
                 <th>Email</th>
+                <th>Törlés</th>
             </tr>
         </thead>
         <tbody>
@@ -33,6 +54,12 @@
                 <td>{{ customer.utca }}</td>
                 <td>{{ customer.hazszam }}</td>
                 <td>{{ customer.email }}</td>
+                <td>
+                    <!-- Törlés gomb -->
+                    <form action="{{ url_for('delete_customer', email=customer.email) }}" method="post">
+                        <button type="submit">Törlés</button>
+                    </form>
+                </td>
             </tr>
             {% endfor %}
         </tbody>
