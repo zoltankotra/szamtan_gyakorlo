@@ -13,13 +13,27 @@
         <a href="{{ url_for('stock') }}">Raktáron</a>
     </nav>
     <h1>Megrendelések</h1>
+
+    <!-- Hibaüzenetek -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <ul>
+        {% for category, message in messages %}
+            <li class="{{ category }}">{{ message }}</li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+    {% endwith %}
+
     <table>
         <thead>
             <tr>
                 <th>Ügyfél neve</th>
                 <th>Cikkszám</th>
                 <th>Mennyiség</th>
-                <th>Státusz</th>
+                <th>Lezárva</th>
+                <th>Teljesítve</th>
+                <th>Műveletek</th>
             </tr>
         </thead>
         <tbody>
@@ -28,7 +42,14 @@
                 <td>{{ order.nev }}</td>
                 <td>{{ order.cikkszam }}</td>
                 <td>{{ order.mennyiseg }}</td>
-                <td>{{ order.status }}</td>
+                <td>{{ 'Igen' if order.lezarva else 'Nem' }}</td>
+                <td>{{ 'Igen' if order.teljesitve else 'Nem' }}</td>
+                <td>
+                    <!-- Törlés gomb -->
+                    <form action="{{ url_for('delete_order', order_id=order.id) }}" method="POST" style="display:inline;">
+                        <button type="submit" onclick="return confirm('Biztosan törölni szeretnéd a megrendelést?')">Törlés</button>
+                    </form>
+                </td>
             </tr>
             {% endfor %}
         </tbody>

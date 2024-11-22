@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <title>Megrendelés hozzáadása</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav>
+        <a href="{{ url_for('index') }}">Főoldal</a>
+        <a href="{{ url_for('products') }}">Termékek</a>
+        <a href="{{ url_for('customers') }}">Ügyfelek</a>
+        <a href="{{ url_for('orders') }}">Megrendelések</a>
+    </nav>
+    <h1>Új megrendelés hozzáadása</h1>
+
+    <!-- Hibaüzenetek -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <ul>
+        {% for category, message in messages %}
+            <li class="{{ category }}">{{ message }}</li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+    {% endwith %}
+
+    <form method="POST">
+        <label for="email">Ügyfél email:</label>
+        <input type="email" id="email" name="email" required><br>
+
+        <label for="cikkszam">Cikkszám:</label>
+        <input type="text" id="cikkszam" name="cikkszam" required><br>
+
+        <label for="mennyiseg">Mennyiség:</label>
+        <input type="number" id="mennyiseg" name="mennyiseg" min="1" required><br>
+
+        <label for="lezarva">Lezárva:</label>
+        <input type="checkbox" id="lezarva" name="lezarva"><br>
+
+        <label for="teljesitve">Teljesítve:</label>
+        <input type="checkbox" id="teljesitve" name="teljesitve"><br>
+
+        <input type="submit" value="Hozzáadás">
+    </form>
+</body>
+</html>

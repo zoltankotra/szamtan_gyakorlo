@@ -123,11 +123,77 @@ def delete_customer(email):
 @app.route('/orders')
 def orders():
     conn = get_db_connection()
-    orders = conn.execute('''SELECT orders.id, customers.nev, orders.cikkszam, orders.mennyiseg, orders.status 
-                            FROM orders
-                            JOIN customers ON orders.customer_id = customers.id''').fetchall()
+    orders = conn.execute('''
+        SELECT 
+            orders.id, 
+            customers.nev, 
+            orders.cikkszam, 
+            orders.mennyiseg, 
+            orders.lezarva, 
+            orders.teljesitve
+        FROM orders
+        JOIN customers ON orders.customer_id = customers.id
+    ''').fetchall()
     conn.close()
     return render_template('orders.html', orders=orders)
+
+@app.route('/add_order', methods=['GET', 'POST'])
+def add_order():
+    if request.method == 'POST':
+        email = request.form['email']
+        cikkszam = request.form['cikkszam']
+        mennyiseg = request.form['mennyiseg']
+        lezarva = 1 if 'lezarva' in request.form else 0
+        teljesitve = 1 if 'teljesitve' in request.form else 0
+
+        conn = get_db_connection()
+        # Ellenőrizzük, hogy az ügyfél email alapján létezik-e
+        customer = conn.execute('SELECT id FROM customers WHERE email = ?', (email,)).fetchone()
+        product_exists = conn.execute('SELECT cikkszam FROM products WHERE cikkszam = ?', (cikkszam,)).fetchone()
+
+        if not customer:
+            flash('Hiba: Az ügyfél email nem létezik!', 'error')
+        elif not product_exists:
+            flash('Hiba: A megadott cikkszám nem létezik!', 'error')
+        else:
+            customer_id = customer['id']
+            conn.execute('''
+                INSERT INTO orders (customer_id, cikkszam, mennyiseg, lezarva, teljesitve)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (customer_id, cikkszam, mennyiseg, lezarva, teljesitve))
+            conn.commit()
+            flash('Megrendelés sikeresen hozzáadva!', 'success')
+
+        conn.close()
+        return redirect(url_for('orders'))
+    return render_template('add_order.html')
+
+@app.route('/delete_order/<int:order_id>', methods=['POST'])
+def delete_order(order_id):
+    conn = get_db_connection()
+    conn.execute('DELETE FROM orders WHERE id = ?', (order_id,))
+    conn.commit()
+    conn.close()
+    flash('Megrendelés sikeresen törölve!', 'success')
+    return redirect(url_for('orders'))
+
+
+@app.route('/update_order_status/<int:order_id>', methods=['POST'])
+def update_order_status(order_id):
+    lezarva = 'lezarva' in request.form
+    teljesitve = 'teljesitve' in request.form
+
+    conn = get_db_connection()
+    conn.execute('''
+        UPDATE orders
+        SET lezarva = ?, teljesitve = ?
+        WHERE id = ?
+    ''', (1 if lezarva else 0, 1 if teljesitve else 0, order_id))
+    conn.commit()
+    conn.close()
+
+    flash('Megrendelés státusza frissítve!', 'success')
+    return redirect(url_for('orders'))
 
 
 @app.route('/stock')
