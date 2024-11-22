@@ -2,7 +2,7 @@
 <html lang="hu">
 <head>
     <meta charset="UTF-8">
-    <title>Raktári Termék Hozzáadása</title>
+    <title>Új Termék Hozzáadása</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
@@ -13,30 +13,19 @@
         <a href="{{ url_for('orders') }}">Megrendelések</a>
         <a href="{{ url_for('stock') }}">Raktáron</a>
     </nav>
-    <h1>Új Raktári Termék Hozzáadása</h1>
-
-    <!-- Hibaüzenet megjelenítése -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        <ul>
-        {% for category, message in messages %}
-            <li class="{{ category }}">{{ message }}</li>
-        {% endfor %}
-        </ul>
-    {% endif %}
-    {% endwith %}
-
+    <h1>Új Termék Hozzáadása</h1>
     <form method="POST">
-        <label for="cikkszam">Cikkszám:</label>
-        <input type="text" id="cikkszam" name="cikkszam" required><br>
-
-        <label for="lokacio">Lokáció:</label>
-        <input type="text" id="lokacio" name="lokacio" required><br>
-
-        <label for="mennyiseg">Mennyiség:</label>
-        <input type="number" id="mennyiseg" name="mennyiseg" required><br>
-
-        <input type="submit" value="Hozzáadás">
+        <label for="cikkszam">Cikkszám:</label><br>
+        <input type="text" id="cikkszam" name="cikkszam" required><br><br>
+        <label for="nev">Megnevezés:</label><br>
+        <input type="text" id="nev" name="nev" required><br><br>
+        <label for="ar">Ár:</label><br>
+        <input type="number" step="0.01" id="ar" name="ar" required><br><br>
+        <label for="suly">Súly:</label><br>
+        <input type="number" step="0.01" id="suly" name="suly" required><br><br>
+        <label for="kategoria">Kategória:</label><br>
+        <input type="text" id="kategoria" name="kategoria" required><br><br>
+        <button type="submit">Hozzáadás</button>
     </form>
 </body>
 </html>
