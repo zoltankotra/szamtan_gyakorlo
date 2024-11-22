@@ -15,17 +15,6 @@
     </nav>
     <h1>Új Raktári Termék Hozzáadása</h1>
 
-    <!-- Hibaüzenet megjelenítése -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        <ul>
-        {% for category, message in messages %}
-            <li class="{{ category }}">{{ message }}</li>
-        {% endfor %}
-        </ul>
-    {% endif %}
-    {% endwith %}
-
     <form method="POST">
         <label for="cikkszam">Cikkszám:</label>
         <input type="text" id="cikkszam" name="cikkszam" required><br>
