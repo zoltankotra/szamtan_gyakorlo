@@ -14,10 +14,6 @@
     </nav>
     <h1>Megrendelések</h1>
 
-    <a href="{{ url_for('add_order') }}">
-        <button>Új Megrendelés Hozzáadása</button>
-    </a>
-
     <!-- Hibaüzenetek -->
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
@@ -29,6 +25,11 @@
     {% endif %}
     {% endwith %}
 
+    <!-- Megrendelés hozzáadása gomb -->
+    <a href="{{ url_for('add_order') }}">
+        <button>Megrendelés hozzáadása</button>
+    </a>
+
     <table>
         <thead>
             <tr>
@@ -37,7 +38,6 @@
                 <th>Mennyiség</th>
                 <th>Lezárva</th>
                 <th>Teljesítve</th>
-                <th>Műveletek</th>
             </tr>
         </thead>
         <tbody>
@@ -46,12 +46,16 @@
                 <td>{{ order.nev }}</td>
                 <td>{{ order.cikkszam }}</td>
                 <td>{{ order.mennyiseg }}</td>
-                <td>{{ 'Igen' if order.lezarva else 'Nem' }}</td>
-                <td>{{ 'Igen' if order.teljesitve else 'Nem' }}</td>
+                <!-- Lezárva oszlop -->
                 <td>
-                    <!-- Törlés gomb -->
-                    <form action="{{ url_for('delete_order', order_id=order.id) }}" method="POST" style="display:inline;">
-                        <button type="submit" onclick="return confirm('Biztosan törölni szeretnéd a megrendelést?')">Törlés</button>
+                    <form action="{{ url_for('update_order_status', order_id=order.id) }}" method="POST">
+                        <input type="checkbox" name="lezarva" {% if order.lezarva %}checked{% endif %} onchange="this.form.submit()">
+                    </form>
+                </td>
+                <!-- Teljesítve oszlop -->
+                <td>
+                    <form action="{{ url_for('update_order_status', order_id=order.id) }}" method="POST">
+                        <input type="checkbox" name="teljesitve" {% if order.teljesitve %}checked{% endif %} onchange="this.form.submit()">
                     </form>
                 </td>
             </tr>

@@ -196,6 +196,7 @@ def update_order_status(order_id):
     return redirect(url_for('orders'))
 
 
+
 @app.route('/stock')
 def stock():
     conn = get_db_connection()
