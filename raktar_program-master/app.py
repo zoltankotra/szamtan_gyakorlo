@@ -184,6 +184,36 @@ def update_order_status(order_id):
     teljesitve = 'teljesitve' in request.form
 
     conn = get_db_connection()
+    order = conn.execute('SELECT * FROM orders WHERE id = ?', (order_id,)).fetchone()
+
+    if teljesitve:
+        # Ha teljesítve van, levonjuk a mennyiséget a megfelelő raktári lokációról
+        cikkszam = order['cikkszam']
+        mennyiseg = order['mennyiseg']
+
+        # Keresünk egy lokációt, ahol van elég készlet
+        stock = conn.execute('''
+            SELECT id, cikkszam, lokacio, mennyiseg 
+            FROM stock 
+            WHERE cikkszam = ? AND mennyiseg >= ? 
+            LIMIT 1
+        ''', (cikkszam, mennyiseg)).fetchone()
+
+        if stock:
+            # Levonjuk a szükséges mennyiséget a megtalált lokációról
+            conn.execute('''
+                UPDATE stock 
+                SET mennyiseg = mennyiseg - ? 
+                WHERE id = ?
+            ''', (mennyiseg, stock['id']))
+            conn.commit()
+            flash('Megrendelés sikeresen teljesítve és a raktárkészlet frissítve!', 'success')
+        else:
+            flash('Nincs elegendő készlet a raktárban!', 'error')
+            conn.close()
+            return redirect(url_for('orders'))
+
+    # Státusz frissítése
     conn.execute('''
         UPDATE orders
         SET lezarva = ?, teljesitve = ?
