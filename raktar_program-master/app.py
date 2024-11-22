@@ -186,8 +186,14 @@ def update_order_status(order_id):
     conn = get_db_connection()
     order = conn.execute('SELECT * FROM orders WHERE id = ?', (order_id,)).fetchone()
 
+    if order['teljesitve'] == 1:
+        # Ha már teljesítve van, akkor nem lehet módosítani
+        flash('Ez a rendelés már teljesítve van, nem módosítható!', 'error')
+        conn.close()
+        return redirect(url_for('orders'))
+
+    # Ha teljesítve van, levonjuk a mennyiséget a raktárban
     if teljesitve:
-        # Ha teljesítve van, levonjuk a mennyiséget a megfelelő raktári lokációról
         cikkszam = order['cikkszam']
         mennyiseg = order['mennyiseg']
 

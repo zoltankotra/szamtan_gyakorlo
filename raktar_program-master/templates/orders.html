@@ -49,13 +49,14 @@
                 <!-- Lezárva oszlop -->
                 <td>
                     <form action="{{ url_for('update_order_status', order_id=order.id) }}" method="POST">
-                        <input type="checkbox" name="lezarva" {% if order.lezarva %}checked{% endif %} onchange="this.form.submit()">
+                        <!-- Lezárva checkbox -->
+                        <input type="checkbox" name="lezarva" {% if order.lezarva %}checked{% endif %} onchange="this.form.submit()" {% if order.teljesitve %}disabled{% endif %}>
                     </form>
                 </td>
-                <!-- Teljesítve oszlop -->
                 <td>
                     <form action="{{ url_for('update_order_status', order_id=order.id) }}" method="POST">
-                        <input type="checkbox" name="teljesitve" {% if order.teljesitve %}checked{% endif %} onchange="this.form.submit()">
+                        <!-- Teljesítve checkbox -->
+                        <input type="checkbox" name="teljesitve" {% if order.teljesitve %}checked{% endif %} onchange="this.form.submit()" {% if order.teljesitve %}disabled{% endif %}>
                     </form>
                 </td>
             </tr>
