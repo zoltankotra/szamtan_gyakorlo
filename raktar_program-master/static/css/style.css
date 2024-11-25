@@ -1,47 +1,191 @@
+/* Alapbeállítások */
+@import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&display=swap');
+
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Merriweather', serif;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(to bottom, #99d1ff, #006eec); /* Színátmenet */
+    background-attachment: fixed;
+    background-size: cover;
+    color: #333;
+    line-height: 1.6;
 }
 
+/* Mintázat minden mögé */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('https://www.transparenttextures.com/patterns/cubes.png');
+    opacity: 0.4;
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* Navigációs sáv */
 nav {
-    background-color: #333;
-    padding: 10px;
+    background-color: #0078D7;
+    color: #fff;
+    padding: 1rem;
+    margin: 10px auto;
+    width: 90%;
+    max-width: 1200px;
+    border-radius: 15px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    text-align: center;
 }
 
 nav a {
     color: white;
-    margin-right: 10px;
     text-decoration: none;
+    margin: 0 15px;
+    font-weight: bold;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
 }
 
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
+nav a:hover {
+    background-color: #005a9e;
 }
 
-table, th, td {
-    border: 1px solid black;
-}
-
-th, td {
-    padding: 10px;
-    text-align: left;
-}
-
+/* Fejléc */
 h1 {
-    margin-top: 20px;
+    text-align: center;
+    margin: 20px 0;
+    color: #005a9e;
+    font-weight: 700;
 }
 
-/* Hibák és sikerüzenetek */
+p {
+    text-align: center;
+}
+
+/* Hibaüzenetek */
 ul {
     list-style-type: none;
     padding: 0;
+    width: 90%;
+    margin: 20px auto;
 }
 
 li.success {
     color: green;
+    font-weight: bold;
+    margin: 10px 0;
 }
 
 li.error {
     color: red;
+    font-weight: bold;
+    margin: 10px 0;
+}
+
+/* Formok */
+form {
+    width: 90%;
+    max-width: 600px;
+    margin: 20px auto;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Input mezők és címkék */
+label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #005a9e;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="submit"],
+input[type="number"]  {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: 1rem;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus {
+    outline: none;
+    border-color: #0078D7;
+    box-shadow: 0 0 5px rgba(0, 120, 215, 0.5);
+}
+
+/* Gombok */
+input[type="submit"] {
+    background-color: #0078D7;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    border: none;
+}
+
+input[type="submit"]:hover {
+    background-color: #005a9e;
+}
+
+a.button-wrapper {  
+    display: inline-block;
+}
+
+button {
+    background-color: #0078D7;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s ease;
+    text-decoration: none; /* Link aláhúzás eltávolítása */
+}
+
+a button:hover {
+    background-color: #005a9e;
+}
+
+/* Igazítás */
+.container {
+    width: 90%;
+    margin: 20px auto;
+}
+
+/* Táblázatok */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+table, th, td {
+    border: 1px solid #ddd;
+}
+
+th {
+    background-color: #0078D7;
+    color: white;
+    font-weight: bold;
+    padding: 15px;
+}
+
+td {
+    padding: 15px;
+    text-align: center;
+    background-color: #f9f9f9;
 }
