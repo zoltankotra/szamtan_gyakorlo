@@ -1,53 +1,45 @@
 import sqlite3
+from faker import Faker
 import random
 
-# Csatlakozás az adatbázishoz
-conn = sqlite3.connect('database.db')
-c = conn.cursor()
 
-# Tábla létrehozása, ha nem létezik
-c.execute('''
-    CREATE TABLE IF NOT EXISTS products (
-        id INTEGER PRIMARY KEY,
-        cikkszam TEXT UNIQUE,
-        nev TEXT,
-        ar REAL,
-        suly REAL,
-        kategoria TEXT
-    )
-''')
+def generate_products(num_products):
+    # Adatbázis kapcsolat
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+
+    # Faker példány létrehozása
+    fake = Faker('hu_HU')
+
+    # Egyedi cikkszámok nyilvántartása
+    cikkszamok = set()
+
+    for _ in range(num_products):
+        while True:
+            cikkszam = str(fake.random_int(min=1000, max=9999))
+            if cikkszam not in cikkszamok:
+                cikkszamok.add(cikkszam)
+                break
+
+        name = fake.word().capitalize()
+        price = round(random.uniform(100, 10000), 2)  # Ár: 100 és 10,000 között
+        weight = round(random.uniform(0.5, 50), 2)  # Súly: 0.5 és 50 kg között
+        category = random.choice(['Elektronika', 'Ruházat', 'Élelmiszer', 'Játék', 'Könyv'])
+
+        try:
+            # Adatok beszúrása az adatbázisba
+            c.execute('''
+                INSERT INTO products (cikkszam, nev, ar, suly, kategoria)
+                VALUES (?, ?, ?, ?, ?)''', (cikkszam, name, price, weight, category))
+        except sqlite3.IntegrityError:
+            # Ha a cikkszám már létezik (bár ezt az előzetes szűrés elvileg kizárja)
+            print(f"Hiba: A cikkszám már létezik: {cikkszam}")
+
+    # Változások mentése és kapcsolat lezárása
+    conn.commit()
+    conn.close()
+    print(f"{num_products} termék sikeresen generálva.")
+
 
 # Termékek generálása
-product_names = [
-    "Laptop", "Egér", "Billentyűzet", "Monitor", "Telefon",
-    "Táblagép", "Füles", "Hangszóró", "Kamera", "Router",
-    "Kábel", "Töltő", "Okosóra", "Egérpad", "Pendrive",
-    "Projektor", "Hűtő", "Nyomtató", "Szkenner", "Tablet",
-    "Ventilátor", "Televízió", "Kávéfőző", "Robotporszívó",
-    "Drón", "Játékvezérlő", "Fülhallgató", "Hangrendszer",
-    "Hálózati kapcsoló", "Okosotthon eszköz"
-]
-categories = ["Elektronika", "Irodai eszközök", "Szórakozás", "Otthon", "Egyéb"]
-
-# Beszúrási ciklus
-for _ in range(30):
-    cikkszam = str(random.randint(1000, 9999))
-    nev = random.choice(product_names)
-    ar = round(random.uniform(1000, 100000), 2)
-    suly = round(random.uniform(0.1, 10), 2)
-    kategoria = random.choice(categories)
-
-    try:
-        c.execute('''
-            INSERT INTO products (cikkszam, nev, ar, suly, kategoria)
-            VALUES (?, ?, ?, ?, ?)
-        ''', (cikkszam, nev, ar, suly, kategoria))
-    except sqlite3.IntegrityError:
-        # Ha a cikkszám ütközik, kihagyjuk a beszúrást
-        print(f"Ütköző cikkszám: {cikkszam}, kihagyva.")
-
-# Változások mentése és kapcsolat lezárása
-conn.commit()
-conn.close()
-
-print("30 termék sikeresen generálva és hozzáadva az adatbázishoz!")
+generate_products(30)  # 30 termék generálása

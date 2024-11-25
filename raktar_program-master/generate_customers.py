@@ -2,52 +2,44 @@ import sqlite3
 from faker import Faker
 
 
-# Adatbázis csatlakozás
-def get_db_connection():
+def generate_customers(num_customers):
+    # Adatbázis kapcsolat
     conn = sqlite3.connect('database.db')
-    conn.row_factory = sqlite3.Row
-    return conn
+    c = conn.cursor()
+
+    # Faker példány létrehozása
+    fake = Faker('hu_HU')
+
+    # Egyedi e-mailek nyilvántartása
+    emails = set()
+
+    for _ in range(num_customers):
+        while True:
+            email = fake.email()
+            if email not in emails:
+                emails.add(email)
+                break
+
+        name = fake.name()
+        postal_code = fake.postcode()
+        city = fake.city()
+        street = fake.street_name()
+        house_number = str(fake.random_int(min=1, max=200))
+
+        try:
+            # Adatok beszúrása az adatbázisba
+            c.execute('''
+                INSERT INTO customers (nev, iranyitoszam, varos, utca, hazszam, email)
+                VALUES (?, ?, ?, ?, ?, ?)''', (name, postal_code, city, street, house_number, email))
+        except sqlite3.IntegrityError:
+            # Ha az email már létezik (bár ezt az előzetes szűrés elvileg kizárja)
+            print(f"Hiba: Az email már létezik: {email}")
+
+    # Változások mentése és kapcsolat lezárása
+    conn.commit()
+    conn.close()
+    print(f"{num_customers} ügyfél sikeresen generálva.")
 
 
 # Ügyfelek generálása
-def generate_customers():
-    fake = Faker('hu_HU')  # Magyar nyelvű adatokat generál
-    customers = []
-
-    for _ in range(30):  # 30 ügyfél generálása
-        name = fake.name()
-        postal_code = fake.postcode()  # Itt a 'postalcode()' a helyes metódus
-        city = fake.city()
-        street = fake.street_name()
-        house_number = fake.building_number()
-        email = fake.email()
-
-        customers.append((name, postal_code, city, street, house_number, email))
-
-    return customers
-
-
-# Ügyfelek hozzáadása az adatbázishoz
-def add_customers_to_db(customers):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    for customer in customers:
-        cursor.execute('''
-            INSERT INTO customers (nev, iranyitoszam, varos, utca, hazszam, email)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', customer)
-
-    conn.commit()
-    conn.close()
-
-
-# Fő futtató kód
-if __name__ == '__main__':
-    # Ügyfelek generálása
-    customers = generate_customers()
-
-    # Ügyfelek hozzáadása az adatbázishoz
-    add_customers_to_db(customers)
-
-    print("30 ügyfél sikeresen hozzáadva az adatbázishoz!")
+generate_customers(30)  # 30 ügyfél generálása
