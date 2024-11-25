@@ -30,7 +30,20 @@ def products():
     conn.close()
 
     total_pages = (total_products + per_page - 1) // per_page  # Összes oldal száma
-    return render_template('products.html', products=products, page=page, total_pages=total_pages)
+
+    # Számítsuk ki az oldalszámok tartományát
+    start_page = max(1, page - 2)  # Az aktuális oldalhoz képest 2-vel hátrébb
+    end_page = min(total_pages, page + 2)  # Az aktuális oldalhoz képest 2-vel előrébb
+
+    return render_template(
+        'products.html',
+        products=products,
+        page=page,
+        total_pages=total_pages,
+        start_page=start_page,
+        end_page=end_page
+    )
+
 
 
 @app.route('/add_product', methods=['GET', 'POST'])
@@ -94,7 +107,19 @@ def customers():
     conn.close()
 
     total_pages = (total_customers + per_page - 1) // per_page  # Összes oldal száma
-    return render_template('customers.html', customers=customers, page=page, total_pages=total_pages)
+
+    # Számítsuk ki az oldalszámok tartományát
+    start_page = max(1, page - 2)  # Az aktuális oldalhoz képest 2-vel hátrébb
+    end_page = min(total_pages, page + 2)  # Az aktuális oldalhoz képest 2-vel előrébb
+
+    return render_template(
+        'customers.html',
+        customers=customers,
+        page=page,
+        total_pages=total_pages,
+        start_page=start_page,
+        end_page=end_page
+    )
 
 
 

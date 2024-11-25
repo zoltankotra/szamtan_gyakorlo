@@ -61,19 +61,22 @@
         </table>
     </div>
 
-    <div class="pagination">
+<div class="pagination">
     {% if page > 1 %}
+        <a href="{{ url_for('products', page=1) }}">Első oldal</a>
         <a href="{{ url_for('products', page=page-1) }}">Előző</a>
     {% endif %}
 
-    {% for p in range(1, total_pages + 1) %}
+    {% for p in range(start_page, end_page + 1) %}
         <a href="{{ url_for('products', page=p) }}" class="{% if p == page %}active{% endif %}">{{ p }}</a>
     {% endfor %}
 
     {% if page < total_pages %}
         <a href="{{ url_for('products', page=page+1) }}">Következő</a>
+        <a href="{{ url_for('products', page=total_pages) }}">Utolsó oldal</a>
     {% endif %}
 </div>
+
 
 
 </body>
