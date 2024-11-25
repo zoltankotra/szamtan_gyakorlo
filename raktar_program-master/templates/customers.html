@@ -26,43 +26,41 @@
     {% endif %}
     {% endwith %}
 
-    <!-- Gomb, amely átnavigál az új ügyfél hozzáadására -->
-    <a href="{{ url_for('add_customer') }}">
-        <button>Új ügyfél hozzáadása</button>
-    </a>
-
-    <!-- Ügyfelek lista -->
-    <h2>Ügyfelek listája</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Neve</th>
-                <th>Ir. szám</th>
-                <th>Város</th>
-                <th>Utca</th>
-                <th>Házszám</th>
-                <th>Email</th>
-                <th>Törlés</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for customer in customers %}
-            <tr>
-                <td>{{ customer.nev }}</td>
-                <td>{{ customer.iranyitoszam }}</td>
-                <td>{{ customer.varos }}</td>
-                <td>{{ customer.utca }}</td>
-                <td>{{ customer.hazszam }}</td>
-                <td>{{ customer.email }}</td>
-                <td>
-                    <!-- Törlés gomb -->
-                    <form action="{{ url_for('delete_customer', email=customer.email) }}" method="post">
-                        <button type="submit">Törlés</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</body>
-</html>
+    <div class="container">
+        <!-- "Új ügyfél hozzáadása" gomb -->
+        <a href="{{ url_for('add_customer') }}" class="button-wrapper">
+            <button>Új ügyfél hozzáadása</button>
+        </a>
+        <!-- Ügyfelek táblázata -->
+        <table>
+            <thead>
+                <tr>
+                    <th>Neve</th>
+                    <th>Ir. szám</th>
+                    <th>Város</th>
+                    <th>Utca</th>
+                    <th>Házszám</th>
+                    <th>Email</th>
+                    <th>Törlés</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for customer in customers %}
+                <tr>
+                    <td>{{ customer.nev }}</td>
+                    <td>{{ customer.iranyitoszam }}</td>
+                    <td>{{ customer.varos }}</td>
+                    <td>{{ customer.utca }}</td>
+                    <td>{{ customer.hazszam }}</td>
+                    <td>{{ customer.email }}</td>
+                    <td>
+                        <form action="{{ url_for('delete_customer', email=customer.email) }}" method="post">
+                            <button type="submit">Törlés</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    

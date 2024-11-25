@@ -24,32 +24,36 @@
         </ul>
     {% endif %}
     {% endwith %}
-
-    <a href="{{ url_for('add_stock') }}">Új raktári termék hozzáadása</a>
-    <table>
-        <thead>
-            <tr>
-                <th>Cikkszám</th>
-                <th>Lokáció</th>
-                <th>Mennyiség</th>
-                <th>Akciók</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in stock %}
-            <tr>
-                <td>{{ item.cikkszam }}</td>
-                <td>{{ item.lokacio }}</td>
-                <td>{{ item.mennyiseg }}</td>
-                <td>
-                    <!-- Törlés gomb -->
-                    <form action="{{ url_for('delete_stock', stock_id=item.id) }}" method="POST" style="display:inline;">
-                        <button type="submit" onclick="return confirm('Biztosan törli a rekordot?');">Törlés</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="container">
+    <!--<a href="{{ url_for('add_stock') }}">Új raktári termék hozzáadása</a>-->
+        <a href="{{ url_for('add_stock') }}">
+            <button>Új raktári termék hozzáadása</button>
+        </a>
+        <table>
+            <thead>
+                <tr>
+                    <th>Cikkszám</th>
+                    <th>Lokáció</th>
+                    <th>Mennyiség</th>
+                    <th>Akciók</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in stock %}
+                <tr>
+                    <td>{{ item.cikkszam }}</td>
+                    <td>{{ item.lokacio }}</td>
+                    <td>{{ item.mennyiseg }}</td>
+                    <td>
+                        <!-- Törlés gomb -->
+                        <form action="{{ url_for('delete_stock', stock_id=item.id) }}" method="POST" style="display:inline;">
+                            <button type="submit" onclick="return confirm('Biztosan törli a rekordot?');">Törlés</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </body>
 </html>

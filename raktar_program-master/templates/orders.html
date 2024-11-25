@@ -25,43 +25,45 @@
     {% endif %}
     {% endwith %}
 
-    <!-- Megrendelés hozzáadása gomb -->
-    <a href="{{ url_for('add_order') }}">
-        <button>Megrendelés hozzáadása</button>
-    </a>
+    <div class="container">
+        <!-- Megrendelés hozzáadása gomb -->
+        <a href="{{ url_for('add_order') }}">
+            <button>Megrendelés hozzáadása</button>
+        </a>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Ügyfél neve</th>
-                <th>Cikkszám</th>
-                <th>Mennyiség</th>
-                <th>Lezárva</th>
-                <th>Teljesítve</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for order in orders %}
-            <tr>
-                <td>{{ order.nev }}</td>
-                <td>{{ order.cikkszam }}</td>
-                <td>{{ order.mennyiseg }}</td>
-                <!-- Lezárva oszlop -->
-                <td>
-                    <form action="{{ url_for('update_order_status', order_id=order.id) }}" method="POST">
-                        <!-- Lezárva checkbox -->
-                        <input type="checkbox" name="lezarva" {% if order.lezarva %}checked{% endif %} onchange="this.form.submit()" {% if order.teljesitve %}disabled{% endif %}>
-                    </form>
-                </td>
-                <td>
-                    <form action="{{ url_for('update_order_status', order_id=order.id) }}" method="POST">
-                        <!-- Teljesítve checkbox -->
-                        <input type="checkbox" name="teljesitve" {% if order.teljesitve %}checked{% endif %} onchange="this.form.submit()" {% if order.teljesitve %}disabled{% endif %}>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+        <table>
+            <thead>
+                <tr>
+                    <th>Ügyfél neve</th>
+                    <th>Cikkszám</th>
+                    <th>Mennyiség</th>
+                    <th>Lezárva</th>
+                    <th>Teljesítve</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td>{{ order.nev }}</td>
+                    <td>{{ order.cikkszam }}</td>
+                    <td>{{ order.mennyiseg }}</td>
+                    <!-- Lezárva oszlop -->
+                    <td>
+                        <form action="{{ url_for('update_order_status', order_id=order.id) }}" method="POST" class="nem">
+                            <!-- Lezárva checkbox -->
+                            <input type="checkbox" name="lezarva" {% if order.lezarva %}checked{% endif %} onchange="this.form.submit()" {% if order.teljesitve %}disabled{% endif %}>
+                        </form>
+                    </td>
+                    <td>
+                        <form action="{{ url_for('update_order_status', order_id=order.id) }}" method="POST" class="nem">
+                            <!-- Teljesítve checkbox -->
+                            <input type="checkbox" name="teljesitve" {% if order.teljesitve %}checked{% endif %} onchange="this.form.submit()" {% if order.teljesitve %}disabled{% endif %}>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </body>
 </html>

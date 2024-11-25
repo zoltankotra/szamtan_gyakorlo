@@ -24,36 +24,41 @@
         </ul>
     {% endif %}
     {% endwith %}
-
-    <a href="{{ url_for('add_product') }}">Új termék hozzáadása</a>
-    <table>
-        <thead>
-            <tr>
-                <th>Cikkszám</th>
-                <th>Termék neve</th>
-                <th>Ár</th>
-                <th>Súly</th>
-                <th>Kategória</th>
-                <th>Törlés</th> <!-- Törlés oszlop hozzáadása -->
-            </tr>
-        </thead>
-        <tbody>
-            {% for product in products %}
-            <tr>
-                <td>{{ product.cikkszam }}</td>
-                <td>{{ product.nev }}</td>
-                <td>{{ product.ar }}</td>
-                <td>{{ product.suly }}</td>
-                <td>{{ product.kategoria }}</td>
-                <td>
-                    <!-- Törlés gomb, ami POST kérést küld -->
-                    <form action="{{ url_for('delete_product', product_id=product.id) }}" method="post">
-                        <button type="submit">Törlés</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    
+    <div class="container">
+        <!--<a href="{{ url_for('add_product') }}">Új termék hozzáadása</a>-->
+        <a href="{{ url_for('add_product') }}">
+            <button>Új termék hozzáadása</button>
+        </a>
+        <table>
+            <thead>
+                <tr>
+                    <th>Cikkszám</th>
+                    <th>Termék neve</th>
+                    <th>Ár</th>
+                    <th>Súly</th>
+                    <th>Kategória</th>
+                    <th>Törlés</th> <!-- Törlés oszlop hozzáadása -->
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                <tr>
+                    <td>{{ product.cikkszam }}</td>
+                    <td>{{ product.nev }}</td>
+                    <td>{{ product.ar }}</td>
+                    <td>{{ product.suly }}</td>
+                    <td>{{ product.kategoria }}</td>
+                    <td>
+                        <!-- Törlés gomb, ami POST kérést küld -->
+                        <form action="{{ url_for('delete_product', product_id=product.id) }}" method="post">
+                            <button type="submit">Törlés</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </body>
 </html>
