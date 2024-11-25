@@ -82,10 +82,20 @@ def delete_product(product_id):
 
 @app.route('/customers', methods=['GET'])
 def customers():
+    per_page = 10  # Egy oldalon megjelenő elemek száma
+    page = int(request.args.get('page', 1))  # Az aktuális oldal lekérése (alapértelmezett: 1)
+    offset = (page - 1) * per_page  # Az eltolás számítása
+
     conn = get_db_connection()
-    customers = conn.execute('SELECT * FROM customers').fetchall()
+    customers = conn.execute(
+        'SELECT * FROM customers LIMIT ? OFFSET ?', (per_page, offset)
+    ).fetchall()
+    total_customers = conn.execute('SELECT COUNT(*) FROM customers').fetchone()[0]
     conn.close()
-    return render_template('customers.html', customers=customers)
+
+    total_pages = (total_customers + per_page - 1) // per_page  # Összes oldal száma
+    return render_template('customers.html', customers=customers, page=page, total_pages=total_pages)
+
 
 
 @app.route('/add_customer', methods=['GET', 'POST'])
