@@ -15,12 +15,23 @@ def get_db_connection():
 def index():
     return render_template('index.html')
 
+
 @app.route('/products')
 def products():
+    per_page = 10  # Egy oldalon megjelenő elemek száma
+    page = int(request.args.get('page', 1))  # Az aktuális oldal lekérése (alapértelmezett: 1)
+    offset = (page - 1) * per_page  # Az eltolás számítása
+
     conn = get_db_connection()
-    products = conn.execute('SELECT * FROM products').fetchall()
+    products = conn.execute(
+        'SELECT * FROM products LIMIT ? OFFSET ?', (per_page, offset)
+    ).fetchall()
+    total_products = conn.execute('SELECT COUNT(*) FROM products').fetchone()[0]
     conn.close()
-    return render_template('products.html', products=products)
+
+    total_pages = (total_products + per_page - 1) // per_page  # Összes oldal száma
+    return render_template('products.html', products=products, page=page, total_pages=total_pages)
+
 
 @app.route('/add_product', methods=['GET', 'POST'])
 def add_product():
