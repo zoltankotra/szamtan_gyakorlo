@@ -8,7 +8,7 @@
 <body>
     <nav>
         <a href="{{ url_for('index') }}">Főoldal</a>
-        <a href="{{ url_for('products') }}">Termékek</a>
+        <a href="{{ url_for('stock') }}">Termékek</a>
         <a href="{{ url_for('customers') }}">Ügyfelek</a>
         <a href="{{ url_for('orders') }}">Megrendelések</a>
         <a class="disabled">Raktáron</a>
@@ -33,10 +33,29 @@
         <table>
             <thead>
                 <tr>
-                    <th>Cikkszám</th>
-                    <th>Lokáció</th>
-                    <th>Mennyiség</th>
+                    <th>
+                        {% if order_by == 'stock.cikkszam' and desc %}
+                        <a href="{{ url_for('stock', desc=0, order_by='stock.cikkszam', page=page) }}">Cikkszám ▼</a>
+                        {% else %}
+                        <a href="{{ url_for('stock', desc=1, order_by='stock.cikkszam', page=page) }}">Cikkszám ▲</a>
+                        {% endif %}
+                    </th>
+                    <th>
+                        {% if order_by == 'stock.lokacio' and desc %}
+                        <a href="{{ url_for('stock', desc=0, order_by='stock.lokacio', page=page) }}">Lokáció ▼</a>
+                        {% else %}
+                        <a href="{{ url_for('stock', desc=1, order_by='stock.lokacio', page=page) }}">Lokáció ▲</a>
+                        {% endif %}
+                    </th>
+                    <th>
+                        {% if order_by == 'stock.mennyiseg' and desc %}
+                        <a href="{{ url_for('stock', desc=0, order_by='stock.mennyiseg', page=page) }}">Mennyiség ▼</a>
+                        {% else %}
+                        <a href="{{ url_for('stock', desc=1, order_by='stock.mennyiseg', page=page) }}">Mennyiség ▲</a>
+                        {% endif %}
+                    </th>
                     <th>Akciók</th>
+                    
                 </tr>
             </thead>
             <tbody>
@@ -55,6 +74,20 @@
                 {% endfor %}
             </tbody>
         </table>
+    </div>
+    <div class="pagination">
+        {% if page > 1 %}
+        <a href="{{ url_for('stock', order_by=order_by, page=1) }}">Első oldal</a>
+        <a href="{{ url_for('stock', order_by=order_by, page=page-1) }}">Előző</a>
+        {% endif %}
+
+        {% for p in range(start_page, end_page + 1) %}
+        <a href="{{ url_for('stock', order_by=order_by, page=p) }}" class="{% if p == page %}active{% endif %}">{{ p }}</a>
+        {% endfor %}
+
+        {% if page < total_pages %} <a href="{{ url_for('stock', order_by=order_by, page=page+1) }}">Következő</a>
+            <a href="{{ url_for('stock', order_by=order_by, page=total_pages) }}">Utolsó oldal</a>
+            {% endif %}
     </div>
 </body>
 </html>
