@@ -36,13 +36,49 @@
         <table>
             <thead>
                 <tr>
-                    <th>Neve</th>
-                    <th>Ir. szám</th>
-                    <th>Város</th>
-                    <th>Utca</th>
-                    <th>Házszám</th>
-                    <th>Email</th>
-                    <th>Törlés</th>
+                    <th>
+                        {% if order_by == 'nev' and desc %}
+                        <a href="{{ url_for('customers', desc=0, order_by='nev', page=page) }}">Neve ▼</a>
+                        {% else %}
+                        <a href="{{ url_for('customers', desc=1, order_by='nev', page=page) }}">Neve ▲</a>
+                        {% endif %}
+                    </th>
+                    <th>
+                        {% if order_by == 'iranyitszam' and desc %}
+                        <a href="{{ url_for('customers', desc=0, order_by='iranyitoszam', page=page) }}">Ir. szám ▼</a>
+                        {% else %}
+                        <a href="{{ url_for('customers', desc=1, order_by='iranyitoszam', page=page) }}">Ir. szám ▲</a>
+                        {% endif %}
+                    </th>
+                    <th>
+                        {% if order_by == 'varos' and desc %}
+                        <a href="{{ url_for('customers', desc=0, order_by='varos', page=page) }}">Város ▼</a>
+                        {% else %}
+                        <a href="{{ url_for('customers', desc=1, order_by='varos', page=page) }}">Város ▲</a>
+                        {% endif %}
+                    </th>
+                    <th>
+                        {% if order_by == 'utca' and desc %}
+                        <a href="{{ url_for('customers', desc=0, order_by='utca', page=page) }}">Utca ▼</a>
+                        {% else %}
+                        <a href="{{ url_for('customers', desc=1, order_by='utca', page=page) }}">Utca ▲</a>
+                        {% endif %}
+                    </th>
+                    <th>
+                        {% if order_by == 'hazszam' and desc %}
+                        <a href="{{ url_for('customers', desc=0, order_by='hazszam', page=page) }}">Házszám ▼</a>
+                        {% else %}
+                        <a href="{{ url_for('customers', desc=1, order_by='hazszam', page=page) }}">Házszám ▲</a>
+                        {% endif %}
+                    </th>
+                    <th>
+                        {% if order_by == 'email' and desc %}
+                        <a href="{{ url_for('customers', desc=0, order_by='email', page=page) }}">Email ▼</a>
+                        {% else %}
+                        <a href="{{ url_for('customers', desc=1, order_by='email', page=page) }}">Email ▲</a>
+                        {% endif %}
+                    </th>
+                    <th>Törlés</th>                    
                 </tr>
             </thead>
             <tbody>

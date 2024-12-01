@@ -177,6 +177,10 @@ table {
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
+table.settings, table.settings tr, table.settings th {
+    background-color: transparent;
+}
+
 table, th, td {
     border: 1px solid #ddd;
 }
@@ -186,6 +190,11 @@ th {
     color: white;
     font-weight: bold;
     padding: 15px;
+}
+
+th a {
+    color: white;
+    text-decoration: none; /* Link aláhúzás eltávolítása */
 }
 
 td {

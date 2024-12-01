@@ -21,10 +21,20 @@ def products():
     per_page = 10  # Egy oldalon megjelenő elemek száma
     page = int(request.args.get('page', 1))  # Az aktuális oldal lekérése (alapértelmezett: 1)
     offset = (page - 1) * per_page  # Az eltolás számítása
+    order_by = str(request.args.get('order_by', 'cikkszam'))
+    desc = request.args.get('desc', 'false').lower() in ('true', '1')
+
+    valid_columns = {'cikkszam', 'nev', 'ar', 'suly', 'kategoria'}
+    if order_by not in valid_columns:
+        raise ValueError("Invalid column name for ordering.") #Elkerüljük az SQL injection-t
+    if desc:
+        descending = 'DESC'
+    if not desc:
+        descending = ''
 
     conn = get_db_connection()
     products = conn.execute(
-        'SELECT * FROM products LIMIT ? OFFSET ?', (per_page, offset)
+        f'SELECT * FROM products ORDER BY {order_by} {descending} LIMIT ? OFFSET ?', (per_page, offset)
     ).fetchall()
     total_products = conn.execute('SELECT COUNT(*) FROM products').fetchone()[0]
     conn.close()
@@ -39,6 +49,8 @@ def products():
         'products.html',
         products=products,
         page=page,
+        order_by=order_by,
+        desc=desc,
         total_pages=total_pages,
         start_page=start_page,
         end_page=end_page
@@ -98,10 +110,20 @@ def customers():
     per_page = 10  # Egy oldalon megjelenő elemek száma
     page = int(request.args.get('page', 1))  # Az aktuális oldal lekérése (alapértelmezett: 1)
     offset = (page - 1) * per_page  # Az eltolás számítása
+    order_by = str(request.args.get('order_by', 'nev'))
+    desc = request.args.get('desc', 'false').lower() in ('true', '1')
+
+    valid_columns = {'nev', 'iranyitoszam', 'varos', 'utca', 'hazszam', 'email'}
+    if order_by not in valid_columns:
+        raise ValueError("Invalid column name for ordering.") #Elkerüljük az SQL injection-t
+    if desc:
+        descending = 'DESC'
+    if not desc:
+        descending = ''
 
     conn = get_db_connection()
     customers = conn.execute(
-        'SELECT * FROM customers LIMIT ? OFFSET ?', (per_page, offset)
+        f'SELECT * FROM customers ORDER BY {order_by} {descending} LIMIT ? OFFSET ?', (per_page, offset)
     ).fetchall()
     total_customers = conn.execute('SELECT COUNT(*) FROM customers').fetchone()[0]
     conn.close()
@@ -116,6 +138,8 @@ def customers():
         'customers.html',
         customers=customers,
         page=page,
+        order_by=order_by,
+        desc=desc,
         total_pages=total_pages,
         start_page=start_page,
         end_page=end_page
