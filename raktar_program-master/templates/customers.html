@@ -44,7 +44,7 @@
                         {% endif %}
                     </th>
                     <th>
-                        {% if order_by == 'iranyitszam' and desc %}
+                        {% if order_by == 'iranyitoszam' and desc %}
                         <a href="{{ url_for('customers', desc=0, order_by='iranyitoszam', page=page) }}">Ir. szám ▼</a>
                         {% else %}
                         <a href="{{ url_for('customers', desc=1, order_by='iranyitoszam', page=page) }}">Ir. szám ▲</a>
