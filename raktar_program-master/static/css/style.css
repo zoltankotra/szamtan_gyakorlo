@@ -53,6 +53,10 @@ nav a:hover {
     background-color: #005a9e;
 }
 
+nav a.disabled {
+    background-color: #005a9e;
+}
+
 /* Fejléc */
 h1 {
     text-align: center;
@@ -250,12 +254,12 @@ td form button {
     background-color: #005a9e;
 }
 
-.pagination .active a {
+.pagination a.active {
     background-color: #005a9e;
     cursor: default;
 }
 
-.pagination .disabled a {
+.pagination a.disabled {
     background-color: #cccccc;
     color: #666666;
     cursor: not-allowed;
