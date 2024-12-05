@@ -31,46 +31,25 @@
         <a href="{{ url_for('add_order') }}">
             <button>Megrendelés hozzáadása</button>
         </a>
+        <div class="dropdown">
+            <button class="dropbtn">Rows Per Page: {{ query_params['per_page'] }}</button>
+            <div class="dropdown-content">
+                {% for size in [5, 10, 20, 50, 100] %}
+                <a href="{{ url_for('orders', **dict(query_params, per_page=size, page=1)) }}">{{ size }}</a>
+                {% endfor %}
+            </div>
+        </div>
 
         <table>
             <thead>
                 <tr>
+                    {% for column in columns %}
                     <th>
-                        {% if order_by == 'customers.nev' and desc %}
-                        <a href="{{ url_for('orders', desc=0, order_by='customers.nev', page=page) }}">Ügyfél neve ▼</a>
-                        {% else %}
-                        <a href="{{ url_for('orders', desc=1, order_by='customers.nev', page=page) }}">Ügyfél neve ▲</a>
-                        {% endif %}
+                        <a href="{{ url_for('orders', **dict(query_params, order_by=column.name, desc=0 if query_params['order_by'] == column.name and query_params['desc'] else 1)) }}">
+                            {{ column.label }} {{ '▼' if query_params['order_by'] == column.name and query_params['desc'] else '▲' }}
+                        </a>
                     </th>
-                    <th>
-                        {% if order_by == 'orders.cikkszam' and desc %}
-                        <a href="{{ url_for('orders', desc=0, order_by='orders.cikkszam', page=page) }}">Cikkszám ▼</a>
-                        {% else %}
-                        <a href="{{ url_for('orders', desc=1, order_by='orders.cikkszam', page=page) }}">Cikkszám ▲</a>
-                        {% endif %}
-                    </th>
-                    <th>
-                        {% if order_by == 'orders.mennyiseg' and desc %}
-                        <a href="{{ url_for('orders', desc=0, order_by='orders.mennyiseg', page=page) }}">Mennyiség ▼</a>
-                        {% else %}
-                        <a href="{{ url_for('orders', desc=1, order_by='orders.mennyiseg', page=page) }}">Mennyiség ▲</a>
-                        {% endif %}
-                    </th>
-                    <th>
-                        {% if order_by == 'orders.lezarva' and desc %}
-                        <a href="{{ url_for('orders', desc=0, order_by='orders.lezarva', page=page) }}">Lezárva ▼</a>
-                        {% else %}
-                        <a href="{{ url_for('orders', desc=1, order_by='orders.lezarva', page=page) }}">Lezárva ▲</a>
-                        {% endif %}
-                    </th>
-                    <th>
-                        {% if order_by == 'orders.teljesitve' and desc %}
-                        <a href="{{ url_for('orders', desc=0, order_by='orders.teljesitve', page=page) }}">Teljesítve ▼</a>
-                        {% else %}
-                        <a href="{{ url_for('orders', desc=1, order_by='orders.teljesitve', page=page) }}">Teljesítve ▲</a>
-                        {% endif %}
-                    </th>
-                    
+                    {% endfor %}
                 </tr>
             </thead>
             <tbody>
@@ -100,17 +79,18 @@
 
     <div class="pagination">
         {% if page > 1 %}
-        <a href="{{ url_for('orders', order_by=order_by, page=1) }}">Első oldal</a>
-        <a href="{{ url_for('orders', order_by=order_by, page=page-1) }}">Előző</a>
+        <a href="{{ url_for('orders', **dict(query_params, page=1)) }}">Első oldal</a>
+        <a href="{{ url_for('orders', **dict(query_params, page=page-1)) }}">Előző</a>
         {% endif %}
-
+    
         {% for p in range(start_page, end_page + 1) %}
-        <a href="{{ url_for('orders', order_by=order_by, page=p) }}" class="{% if p == page %}active{% endif %}">{{ p }}</a>
+        <a href="{{ url_for('orders', **dict(query_params, page=p)) }}" class="{% if p == page %}active{% endif %}">{{ p }}</a>
         {% endfor %}
-
-        {% if page < total_pages %} <a href="{{ url_for('orders', order_by=order_by, page=page+1) }}">Következő</a>
-            <a href="{{ url_for('orders', order_by=order_by, page=total_pages) }}">Utolsó oldal</a>
-            {% endif %}
+    
+        {% if page < total_pages %}
+        <a href="{{ url_for('orders', **dict(query_params, page=page+1)) }}">Következő</a>
+        <a href="{{ url_for('orders', **dict(query_params, page=total_pages)) }}">Utolsó oldal</a>
+        {% endif %}
     </div>
 
 </body>

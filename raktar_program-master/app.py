@@ -124,7 +124,7 @@ def delete_product(product_id):
 
 @app.route('/customers', methods=['GET'])
 def customers():
-    per_page = 10  # Egy oldalon megjelenő elemek száma
+    per_page = int(request.args.get('per_page', 10))  # Egy oldalon megjelenő elemek száma
     page = int(request.args.get('page', 1))  # Az aktuális oldal lekérése (alapértelmezett: 1)
     offset = (page - 1) * per_page  # Az eltolás számítása
     order_by = str(request.args.get('order_by', 'nev'))
@@ -151,6 +151,22 @@ def customers():
     start_page = max(1, page - 2)  # Az aktuális oldalhoz képest 2-vel hátrébb
     end_page = min(total_pages, page + 2)  # Az aktuális oldalhoz képest 2-vel előrébb
 
+    query_params = {
+        'page': page,
+        'per_page': per_page,
+        'order_by': order_by,
+        'desc': desc
+    }
+
+    columns = [
+        {"name": "nev", "label": "Név"},
+        {"name": "iranyitoszam", "label": "Irányítószám"},
+        {"name": "varos", "label": "Város"},
+        {"name": "utca", "label": "Utca"},
+        {"name": "hazszam", "label": "Házszám"},
+        {"name": "email", "label": "E-mail"}
+    ]
+
     return render_template(
         'customers.html',
         customers=customers,
@@ -159,7 +175,9 @@ def customers():
         desc=desc,
         total_pages=total_pages,
         start_page=start_page,
-        end_page=end_page
+        end_page=end_page,
+        query_params=query_params,
+        columns=columns
     )
 
 
@@ -209,7 +227,7 @@ def delete_customer(email):
 
 @app.route('/orders')
 def orders():
-    per_page = 10  # Egy oldalon megjelenő elemek száma
+    per_page = int(request.args.get('per_page', 10))  # Egy oldalon megjelenő elemek száma
     page = int(request.args.get('page', 1))  # Az aktuális oldal lekérése (alapértelmezett: 1)
     offset = (page - 1) * per_page  # Az eltolás számítása
     order_by = str(request.args.get('order_by', 'customers.nev'))
@@ -250,6 +268,21 @@ def orders():
     start_page = max(1, page - 2)  # Az aktuális oldalhoz képest 2-vel hátrébb
     end_page = min(total_pages, page + 2)  # Az aktuális oldalhoz képest 2-vel előrébb
 
+    query_params = {
+        'page': page,
+        'per_page': per_page,
+        'order_by': order_by,
+        'desc': desc
+    }
+
+    columns = [
+        {"name": "customers.nev", "label": "Ügyfél"},
+        {"name": "orders.cikkszam", "label": "Cikkszám"},
+        {"name": "orders.mennyiseg", "label": "Mennyiség"},
+        {"name": "orders.lezarva", "label": "Lezárva"},
+        {"name": "orders.teljesitve", "label": "Teljesítve"}
+    ]
+
     return render_template(
             'orders.html',
             orders=orders,
@@ -258,7 +291,9 @@ def orders():
             desc=desc,
             total_pages=total_pages,
             start_page=start_page,
-            end_page=end_page
+            end_page=end_page,
+            query_params=query_params,
+            columns=columns
         )
 
 @app.route('/add_order', methods=['GET', 'POST'])
@@ -359,7 +394,7 @@ def update_order_status(order_id):
 
 @app.route('/stock')
 def stock():
-    per_page = 10  # Egy oldalon megjelenő elemek száma
+    per_page = int(request.args.get('per_page', 10))  # Egy oldalon megjelenő elemek száma
     page = int(request.args.get('page', 1))  # Az aktuális oldal lekérése (alapértelmezett: 1)
     offset = (page - 1) * per_page  # Az eltolás számítása
     order_by = str(request.args.get('order_by', 'products.cikkszam'))
@@ -387,6 +422,19 @@ def stock():
     start_page = max(1, page - 2)  # Az aktuális oldalhoz képest 2-vel hátrébb
     end_page = min(total_pages, page + 2)  # Az aktuális oldalhoz képest 2-vel előrébb
 
+    query_params = {
+        'page': page,
+        'per_page': per_page,
+        'order_by': order_by,
+        'desc': desc
+    }
+
+    columns = [
+        {"name": "products.cikkszam", "label": "Cikkszám"},
+        {"name": "stock.lokacio", "label": "Lokáció"},
+        {"name": "stock.mennyiseg", "label": "Mennyiség"}
+    ]
+
     return render_template(
         'stock.html',
         stock=stock,
@@ -395,7 +443,9 @@ def stock():
         desc=desc,
         total_pages=total_pages,
         start_page=start_page,
-        end_page=end_page
+        end_page=end_page,
+        query_params=query_params,
+        columns=columns
     )
 
 
