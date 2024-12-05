@@ -505,5 +505,31 @@ def delete_stock(stock_id):
     return redirect(url_for('stock'))
 
 
+@app.route('/product/<cikkszam>')
+def product_details(cikkszam):
+    conn = get_db_connection()
+    product = conn.execute(
+        'SELECT * FROM products WHERE cikkszam = ?',
+        (cikkszam,)
+    ).fetchone()
+    stock = conn.execute(
+        '''SELECT stock.id, stock.lokacio, stock.mennyiseg 
+           FROM stock 
+           WHERE stock.cikkszam = ?''',
+        (cikkszam,)
+    ).fetchall()
+    conn.close()
+
+    #if product is None:
+    #    abort(404, description="Product not found")
+
+    return render_template(
+        'product_details.html',
+        product=product,
+        stock=stock
+    )
+
+
+
 if __name__ == '__main__':
     app.run(debug=True)
