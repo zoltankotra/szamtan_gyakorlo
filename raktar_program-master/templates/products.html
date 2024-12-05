@@ -66,7 +66,11 @@
                         </a>
                     </td>
                     
-                    <td>{{ product.nev }}</td>
+                    <td>
+                        <a href="{{ url_for('product_details', cikkszam=product.cikkszam) }}">
+                            {{ product.nev }}
+                        </a>
+                    </td>
                     <td>{{ product.ar }}</td>
                     <td>{{ product.suly }}</td>
                     <td>{{ product.kategoria }}</td>

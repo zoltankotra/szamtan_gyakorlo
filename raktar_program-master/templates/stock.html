@@ -55,8 +55,17 @@
             <tbody>
                 {% for item in stock %}
                 <tr>
-                    <td>{{ item.cikkszam }}</td>
-                    <td>{{ item.nev }}</td>
+                    <td>
+                        <a href="{{ url_for('product_details', cikkszam=item.cikkszam) }}">
+                            {{ item.cikkszam }}
+                        </a>
+                    </td>
+                    
+                    <td>
+                        <a href="{{ url_for('product_details', cikkszam=item.cikkszam) }}">
+                            {{ item.nev }}
+                        </a>
+                    </td>
                     <td>{{ item.lokacio }}</td>
                     <td>{{ item.mennyiseg }}</td>
                     <td>

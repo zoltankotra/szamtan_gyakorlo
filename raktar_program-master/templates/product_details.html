@@ -11,6 +11,8 @@
     <nav>
         <a href="{{ url_for('index') }}">Főoldal</a>
         <a href="{{ url_for('products') }}">Termékek</a>
+        <a href="{{ url_for('customers') }}">Ügyfelek</a>
+        <a href="{{ url_for('orders') }}">Megrendelések</a>
         <a href="{{ url_for('stock') }}">Raktáron</a>
     </nav>
 
@@ -24,23 +26,25 @@
         <p><strong>Kategória:</strong> {{ product.kategoria }}</p>
     </div>
 
-    <h2>Raktári elhelyezés</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Lokáció</th>
-                <th>Mennyiség</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in stock %}
-            <tr>
-                <td>{{ item.lokacio }}</td>
-                <td>{{ item.mennyiseg }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="container">
+        <h2>Raktári elhelyezés</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Lokáció</th>
+                    <th>Mennyiség</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in stock %}
+                <tr>
+                    <td>{{ item.lokacio }}</td>
+                    <td>{{ item.mennyiseg }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </body>
 
 </html>
