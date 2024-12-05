@@ -400,7 +400,7 @@ def stock():
     order_by = str(request.args.get('order_by', 'products.cikkszam'))
     desc = request.args.get('desc', 'false').lower() in ('true', '1')
 
-    valid_columns = {'stock.id', 'products.cikkszam', 'stock.lokacio', 'stock.mennyiseg'}
+    valid_columns = {'stock.id', 'products.cikkszam', 'products.nev', 'stock.lokacio', 'stock.mennyiseg'}
     if order_by not in valid_columns:
         raise ValueError("Invalid column name for ordering.") #Elkerüljük az SQL injection-t
     if desc:
@@ -409,7 +409,7 @@ def stock():
         descending = ''
 
     conn = get_db_connection()
-    stock = conn.execute(f'''SELECT stock.id, products.cikkszam, stock.lokacio, stock.mennyiseg 
+    stock = conn.execute(f'''SELECT stock.id, products.cikkszam, products.nev, stock.lokacio, stock.mennyiseg 
                             FROM stock
                             JOIN products ON stock.cikkszam = products.cikkszam ORDER BY {order_by} {descending} LIMIT ? OFFSET ?
     ''', (per_page, offset) ).fetchall()
@@ -431,6 +431,7 @@ def stock():
 
     columns = [
         {"name": "products.cikkszam", "label": "Cikkszám"},
+        {"name": "products.nev", "label": "Termék"},
         {"name": "stock.lokacio", "label": "Lokáció"},
         {"name": "stock.mennyiseg", "label": "Mennyiség"}
     ]
