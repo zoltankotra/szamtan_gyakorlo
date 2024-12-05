@@ -275,3 +275,64 @@ td form button {
 }
 
 
+/* Dropdown Button */
+.dropbtn {
+    background-color: #0078D7; /* Same as nav background */
+    color: white;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 5px; /* Rounded corners like buttons */
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Hover effect for the dropdown button */
+.dropbtn:hover {
+    background-color: #005a9e; /* Matches hover color in nav */
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3); /* Slightly deeper shadow */
+}
+
+/* Dropdown container */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+/* Dropdown content */
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: white; /* Matches form background */
+    min-width: 200px;
+    border-radius: 5px;
+    overflow: hidden; /* Ensures rounded corners are clean */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Consistent shadow */
+    z-index: 1;
+}
+
+/* Links inside the dropdown */
+.dropdown-content a {
+    color: #333; /* Matches global text color */
+    padding: 10px 15px;
+    text-decoration: none;
+    display: block;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    font-size: 1rem;
+}
+
+.dropdown-content a:hover {
+    background-color: #0078D7; /* Matches button hover color */
+    color: white;
+}
+
+/* Show dropdown content on hover */
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+/* Change the background color of the dropdown button when the dropdown content is shown */
+.dropdown:hover .dropbtn {
+    background-color: #005a9e;
+}
