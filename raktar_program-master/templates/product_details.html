@@ -19,12 +19,16 @@
     <h1>{{ product.nev }} - Termék részletei</h1>
 
     <div class="product-details">
+        <p><strong>ID:</strong> {{ product.id }}</p>
         <p><strong>Cikkszám:</strong> {{ product.cikkszam }}</p>
+        <p><strong>Egység Vonalkód:</strong> {{ product.egyseg_vonalkod }}</p>
+        <p><strong>Gyűjtő Vonalkód:</strong> {{ product.gyujto_vonalkod }}</p>
         <p><strong>Név:</strong> {{ product.nev }}</p>
         <p><strong>Ár:</strong> {{ product.ar }}</p>
         <p><strong>Súly:</strong> {{ product.suly }}</p>
         <p><strong>Kategória:</strong> {{ product.kategoria }}</p>
     </div>
+    
 
     <div class="container">
         <h2>Raktári elhelyezés</h2>

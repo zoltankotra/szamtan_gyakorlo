@@ -11,6 +11,8 @@ def create_database():
     c.execute('''CREATE TABLE IF NOT EXISTS products (
                     id INTEGER PRIMARY KEY,
                     cikkszam TEXT UNIQUE,
+                    egyseg_vonalkod INTEGER UNIQUE,
+                    gyujto_vonalkod INTEGER UNIQUE,
                     nev TEXT,
                     ar REAL,
                     suly REAL,
@@ -22,7 +24,9 @@ def create_database():
                     cikkszam TEXT,
                     lokacio TEXT,
                     mennyiseg INTEGER,
-                    FOREIGN KEY(cikkszam) REFERENCES products(cikkszam))''')
+                    order_id INTEGER,
+                    FOREIGN KEY(cikkszam) REFERENCES products(cikkszam),
+                    FOREIGN KEY(order_id) REFERENCES orders(id))''')
 
     # Ügyfelek tábla
     c.execute('''CREATE TABLE IF NOT EXISTS customers (
@@ -40,7 +44,8 @@ def create_database():
                     customer_id INTEGER,
                     cikkszam TEXT,
                     mennyiseg INTEGER,
-                    status TEXT,
+                    lezarva INTEGER DEFAULT 0,
+                    teljesitve INTEGER DEFAULT 0,
                     FOREIGN KEY(customer_id) REFERENCES customers(id),
                     FOREIGN KEY(cikkszam) REFERENCES products(cikkszam))''')
 

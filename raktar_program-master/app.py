@@ -79,6 +79,8 @@ def products():
 def add_product():
     if request.method == 'POST':
         cikkszam = request.form['cikkszam']
+        egyseg_vonalkod = request.form['egyseg_vonalkod']
+        gyujto_vonalkod = request.form['gyujto_vonalkod']
         nev = request.form['nev']
         ar = request.form['ar']
         suly = request.form['suly']
@@ -94,8 +96,8 @@ def add_product():
             return redirect(url_for('products'))
 
         # Ha nem létezik, hozzáadjuk az új terméket
-        conn.execute('INSERT INTO products (cikkszam, nev, ar, suly, kategoria) VALUES (?, ?, ?, ?, ?)',
-                     (cikkszam, nev, ar, suly, kategoria))
+        conn.execute('INSERT INTO products (cikkszam, egyseg_vonalkod, gyujto_vonalkod, nev, ar, suly, kategoria) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                     (cikkszam, egyseg_vonalkod, gyujto_vonalkod, nev, ar, suly, kategoria))
         conn.commit()
         conn.close()
 
@@ -306,7 +308,7 @@ def add_order():
         teljesitve = 1 if 'teljesitve' in request.form else 0
 
         conn = get_db_connection()
-        # Ellenőrizzük, hogy az ügyfél email alapján létezik-e
+        # Check if the customer exists
         customer = conn.execute('SELECT id FROM customers WHERE email = ?', (email,)).fetchone()
         product_exists = conn.execute('SELECT cikkszam FROM products WHERE cikkszam = ?', (cikkszam,)).fetchone()
 
@@ -315,23 +317,58 @@ def add_order():
         elif not product_exists:
             flash('Hiba: A megadott cikkszám nem létezik!', 'error')
         else:
-            # Ellenőrizzük az összkészletet a cikkszám alapján
-            total_stock = conn.execute('''
-                SELECT SUM(mennyiseg) AS total_stock
+            # Get total available stock with order_id IS NULL
+            available_stock = conn.execute('''
+                SELECT id, mennyiseg
                 FROM stock
-                WHERE cikkszam = ?
-            ''', (cikkszam,)).fetchone()['total_stock'] or 0
+                WHERE cikkszam = ? AND order_id IS NULL
+                ORDER BY mennyiseg DESC
+            ''', (cikkszam,)).fetchall()
 
-            if total_stock < mennyiseg:
-                flash(f'Hiba: Nincs elegendő készlet! Jelenlegi készlet: {total_stock}', 'error')
+            total_available = sum(item['mennyiseg'] for item in available_stock)
+
+            if total_available < mennyiseg:
+                flash(f'Hiba: Nincs elegendő szabad készlet! Jelenlegi szabad készlet: {total_available}', 'error')
             else:
                 customer_id = customer['id']
+                # Create the order
                 conn.execute('''
                     INSERT INTO orders (customer_id, cikkszam, mennyiseg, lezarva, teljesitve)
                     VALUES (?, ?, ?, ?, ?)
                 ''', (customer_id, cikkszam, mennyiseg, lezarva, teljesitve))
+                order_id = conn.execute('SELECT last_insert_rowid()').fetchone()[0]
+
+                # Update stock table
+                remaining_quantity = mennyiseg
+                for stock_item in available_stock:
+                    if remaining_quantity == 0:
+                        break
+                    if stock_item['mennyiseg'] <= remaining_quantity:
+                        # Deduct entire stock from this location
+                        conn.execute('''
+                            UPDATE stock
+                            SET order_id = ?
+                            WHERE id = ?
+                        ''', (order_id, stock_item['id']))
+                        remaining_quantity -= stock_item['mennyiseg']
+                    else:
+                        # Deduct partial stock and update remaining stock
+                        conn.execute('''
+                            UPDATE stock
+                            SET mennyiseg = mennyiseg - ?
+                            WHERE id = ?
+                        ''', (remaining_quantity, stock_item['id']))
+                        # Insert new stock entry with assigned order_id
+                        conn.execute('''
+                            INSERT INTO stock (cikkszam, lokacio, mennyiseg, order_id)
+                            SELECT cikkszam, lokacio, ?, ?
+                            FROM stock
+                            WHERE id = ?
+                        ''', (remaining_quantity, order_id, stock_item['id']))
+                        remaining_quantity = 0
+
                 conn.commit()
-                flash('Megrendelés sikeresen hozzáadva!', 'success')
+                flash('Megrendelés sikeresen hozzáadva és készlet frissítve!', 'success')
 
         conn.close()
         return redirect(url_for('orders'))
@@ -339,14 +376,39 @@ def add_order():
     return render_template('add_order.html')
 
 
+
 @app.route('/delete_order/<int:order_id>', methods=['POST'])
 def delete_order(order_id):
     conn = get_db_connection()
-    conn.execute('DELETE FROM orders WHERE id = ?', (order_id,))
-    conn.commit()
-    conn.close()
-    flash('Megrendelés sikeresen törölve!', 'success')
+
+    try:
+        # Fetch the stock items associated with the order
+        allocated_stock = conn.execute('''
+            SELECT id, mennyiseg, cikkszam, lokacio
+            FROM stock
+            WHERE order_id = ?
+        ''', (order_id,)).fetchall()
+
+        # Restore the stock by setting order_id to NULL
+        for stock_item in allocated_stock:
+            conn.execute('''
+                UPDATE stock
+                SET order_id = NULL
+                WHERE id = ?
+            ''', (stock_item['id'],))
+
+        # Delete the order
+        conn.execute('DELETE FROM orders WHERE id = ?', (order_id,))
+        conn.commit()
+        flash('Megrendelés sikeresen törölve és a készlet visszaállítva!', 'success')
+    except Exception as e:
+        conn.rollback()
+        flash(f'Hiba történt a törlés során: {str(e)}', 'error')
+    finally:
+        conn.close()
+
     return redirect(url_for('orders'))
+
 
 
 @app.route('/update_order_status/<int:order_id>', methods=['POST'])
@@ -440,9 +502,17 @@ def stock():
         descending = ''
 
     conn = get_db_connection()
-    stock = conn.execute(f'''SELECT stock.id, products.cikkszam, products.nev, stock.lokacio, stock.mennyiseg 
+    stock = conn.execute(f'''SELECT stock.id, products.cikkszam, products.nev, stock.lokacio, 
+                            (SELECT SUM(mennyiseg) 
+                            FROM stock s 
+                            WHERE s.cikkszam = stock.cikkszam) AS total_mennyiseg,
+                            (SELECT SUM(mennyiseg) 
+                            FROM stock s 
+                            WHERE s.cikkszam = stock.cikkszam AND s.order_id IS NULL) AS mennyiseg_null
                             FROM stock
-                            JOIN products ON stock.cikkszam = products.cikkszam ORDER BY {order_by} {descending} LIMIT ? OFFSET ?
+                            JOIN products ON stock.cikkszam = products.cikkszam 
+                            WHERE stock.order_id IS NULL
+                            ORDER BY {order_by} {descending} LIMIT ? OFFSET ?
     ''', (per_page, offset) ).fetchall()
     total_products = conn.execute('SELECT COUNT(*) FROM stock').fetchone()[0]
     conn.close()
@@ -464,7 +534,8 @@ def stock():
         {"name": "products.cikkszam", "label": "Cikkszám"},
         {"name": "products.nev", "label": "Termék"},
         {"name": "stock.lokacio", "label": "Lokáció"},
-        {"name": "stock.mennyiseg", "label": "Mennyiség"}
+        {"name": "total_mennyiseg", "label": "Mennyiség"},
+        {"name": "mennyiseg_null", "label": "Szabad M."}
     ]
 
     return render_template(
