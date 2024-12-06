@@ -259,7 +259,7 @@ def orders():
         JOIN customers ON orders.customer_id = customers.id
         ORDER BY {order_by} {descending} LIMIT ? OFFSET ?
     ''', (per_page, offset)).fetchall() 
-    total_products = conn.execute('SELECT COUNT(*) FROM products').fetchone()[0]
+    total_products = conn.execute('SELECT COUNT(*) FROM orders').fetchone()[0]
     conn.close()
 
     total_pages = (total_products + per_page - 1) // per_page  # Összes oldal száma
@@ -444,7 +444,7 @@ def stock():
                             FROM stock
                             JOIN products ON stock.cikkszam = products.cikkszam ORDER BY {order_by} {descending} LIMIT ? OFFSET ?
     ''', (per_page, offset) ).fetchall()
-    total_products = conn.execute('SELECT COUNT(*) FROM products').fetchone()[0]
+    total_products = conn.execute('SELECT COUNT(*) FROM stock').fetchone()[0]
     conn.close()
 
     total_pages = (total_products + per_page - 1) // per_page  # Összes oldal száma
