@@ -301,7 +301,7 @@ def add_order():
     if request.method == 'POST':
         email = request.form['email']
         cikkszam = request.form['cikkszam']
-        mennyiseg = request.form['mennyiseg']
+        mennyiseg = int(request.form['mennyiseg'])
         lezarva = 1 if 'lezarva' in request.form else 0
         teljesitve = 1 if 'teljesitve' in request.form else 0
 
@@ -315,17 +315,29 @@ def add_order():
         elif not product_exists:
             flash('Hiba: A megadott cikkszám nem létezik!', 'error')
         else:
-            customer_id = customer['id']
-            conn.execute('''
-                INSERT INTO orders (customer_id, cikkszam, mennyiseg, lezarva, teljesitve)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (customer_id, cikkszam, mennyiseg, lezarva, teljesitve))
-            conn.commit()
-            flash('Megrendelés sikeresen hozzáadva!', 'success')
+            # Ellenőrizzük az összkészletet a cikkszám alapján
+            total_stock = conn.execute('''
+                SELECT SUM(mennyiseg) AS total_stock
+                FROM stock
+                WHERE cikkszam = ?
+            ''', (cikkszam,)).fetchone()['total_stock'] or 0
+
+            if total_stock < mennyiseg:
+                flash(f'Hiba: Nincs elegendő készlet! Jelenlegi készlet: {total_stock}', 'error')
+            else:
+                customer_id = customer['id']
+                conn.execute('''
+                    INSERT INTO orders (customer_id, cikkszam, mennyiseg, lezarva, teljesitve)
+                    VALUES (?, ?, ?, ?, ?)
+                ''', (customer_id, cikkszam, mennyiseg, lezarva, teljesitve))
+                conn.commit()
+                flash('Megrendelés sikeresen hozzáadva!', 'success')
 
         conn.close()
         return redirect(url_for('orders'))
+
     return render_template('add_order.html')
+
 
 @app.route('/delete_order/<int:order_id>', methods=['POST'])
 def delete_order(order_id):
@@ -351,32 +363,50 @@ def update_order_status(order_id):
         conn.close()
         return redirect(url_for('orders'))
 
-    # Ha teljesítve van, levonjuk a mennyiséget a raktárban
     if teljesitve:
         cikkszam = order['cikkszam']
         mennyiseg = order['mennyiseg']
 
-        # Keresünk egy lokációt, ahol van elég készlet
-        stock = conn.execute('''
-            SELECT id, cikkszam, lokacio, mennyiseg 
-            FROM stock 
-            WHERE cikkszam = ? AND mennyiseg >= ? 
-            LIMIT 1
-        ''', (cikkszam, mennyiseg)).fetchone()
+        # Lekérjük az összes olyan lokációt, ahol van a cikkszámból
+        stocks = conn.execute('''
+            SELECT id, lokacio, mennyiseg
+            FROM stock
+            WHERE cikkszam = ?
+            ORDER BY mennyiseg DESC
+        ''', (cikkszam,)).fetchall()
 
-        if stock:
-            # Levonjuk a szükséges mennyiséget a megtalált lokációról
+        remaining_quantity = mennyiseg
+
+        for stock in stocks:
+            if remaining_quantity <= 0:
+                break  # Ha már nincs szükség további levonásra, kilépünk a ciklusból
+
+            stock_quantity = stock['mennyiseg']
+            quantity_to_deduct = min(stock_quantity, remaining_quantity)
+
+            # Levonjuk a készletből a szükséges mennyiséget
             conn.execute('''
-                UPDATE stock 
-                SET mennyiseg = mennyiseg - ? 
+                UPDATE stock
+                SET mennyiseg = mennyiseg - ?
                 WHERE id = ?
-            ''', (mennyiseg, stock['id']))
-            conn.commit()
-            flash('Megrendelés sikeresen teljesítve és a raktárkészlet frissítve!', 'success')
-        else:
-            flash('Nincs elegendő készlet a raktárban!', 'error')
+            ''', (quantity_to_deduct, stock['id']))
+            remaining_quantity -= quantity_to_deduct
+
+            # Ha a lokáció készlete nullára csökkent, töröljük a sort
+            conn.execute('''
+                DELETE FROM stock
+                WHERE id = ? AND mennyiseg = 0
+            ''', (stock['id'],))
+
+        if remaining_quantity > 0:
+            # Ha még mindig maradt kielégítetlen mennyiség, akkor nincs elég készlet
+            flash('Nincs elegendő készlet a raktárban a megrendelés teljesítéséhez!', 'error')
             conn.close()
             return redirect(url_for('orders'))
+
+        # Ha sikerült teljesen kielégíteni az igényt
+        conn.commit()
+        flash('Megrendelés sikeresen teljesítve és a raktárkészlet frissítve!', 'success')
 
     # Státusz frissítése
     conn.execute('''
@@ -389,6 +419,7 @@ def update_order_status(order_id):
 
     flash('Megrendelés státusza frissítve!', 'success')
     return redirect(url_for('orders'))
+
 
 
 
