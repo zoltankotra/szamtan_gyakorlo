@@ -1,70 +1,114 @@
+
+body {
+    font-family: Arial, sans-serif;
+    font-size: 12pt;
+    color: #000;
+    margin: 1cm; /* Add margins suitable for A4 printing */
+    background: none;
+}
+
+nav, .no-print {
+    display: none; /* Hide navigation and elements not needed for print */
+}
+
+h1, h2 {
+    color: #000; /* Ensure headers are printed in black */
+    page-break-after: avoid; /* Prevent breaking headers across pages */
+    font-size: 14pt;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1cm;
+}
+
+th, td {
+    border: 1px solid #000;
+    padding: 0.5em;
+    text-align: left;
+}
+
+/* Zebra Striping */
+tbody tr:nth-child(odd) {
+    background-color: #f2f2f2; /* Light gray for striping */
+}
+
+tbody tr:nth-child(even) {
+    background-color: #fff; /* White for alternating rows */
+}
+
+/* Ensure A4 Paper Compatibility */
+@page {
+    size: A4;
+    margin: 1cm; /* Default margin for printing */
+}
+
+/* Avoid breaking rows between pages */
+tr {
+    page-break-inside: avoid;
+}
+
+/* Ensure page breaks occur at logical points */
+table {
+    page-break-after: auto;
+}
+
+thead {
+    display: table-header-group; /* Keep table headers visible on new pages */
+}
+
+tfoot {
+    display: table-footer-group; /* Optional footer visibility */
+}
+
+/* Styling Links for Print */
+a {
+    color: #000;
+    text-decoration: none; /* Remove link underlining for print */
+}
+
+/* Flexbox for summary container */
+.summary-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px; /* Space between the two sections */
+    margin-bottom: 10px; /* Add space below the summary container */
+}
+
+/* Individual sections */
+.customer-info, .order-summary {
+    flex: 1; /* Equal width for both sections */
+    padding: 10px; /* Add some internal spacing */
+    border: 1px solid #000; /* Optional: Add borders for separation */
+    border-radius: 5px; /* Optional: Add rounded corners */
+}
+
 /* General Styling for Print */
 @media print {
-    body {
-        font-family: Arial, sans-serif;
-        font-size: 12pt;
-        color: #000;
-        margin: 1cm; /* Add margins suitable for A4 printing */
-        background: none;
-    }
+body {
+    font-size: 10pt; /* Reduce font size for print */
+}
 
-    nav, .no-print {
-        display: none; /* Hide navigation and elements not needed for print */
-    }
+h1, h2 {
+    font-size: 12pt; /* Smaller headers for print */
+}
 
-    h1, h2 {
-        color: #000; /* Ensure headers are printed in black */
-        page-break-after: avoid; /* Prevent breaking headers across pages */
-    }
+table {
+    font-size: 9pt; /* Smaller text size in the table for print */
+}
 
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 1cm;
-    }
+th, td {
+    padding: 0.3em; /* Reduce padding in table cells for print */
+}
 
-    th, td {
-        border: 1px solid #000;
-        padding: 0.5em;
-        text-align: left;
-    }
+.summary-container {
+    gap: 5px; /* Reduce space between sections */
+}
 
-    /* Zebra Striping */
-    tbody tr:nth-child(odd) {
-        background-color: #f2f2f2; /* Light gray for striping */
-    }
-
-    tbody tr:nth-child(even) {
-        background-color: #fff; /* White for alternating rows */
-    }
-
-    /* Ensure A4 Paper Compatibility */
-    @page {
-        size: A4;
-        margin: 1cm; /* Default margin for printing */
-    }
-
-    /* Avoid breaking rows between pages */
-    tr {
-        page-break-inside: avoid;
-    }
-
-    /* Ensure page breaks occur at logical points */
-    table {
-        page-break-after: auto;
-    }
-
-    thead {
-        display: table-header-group; /* Keep table headers visible on new pages */
-    }
-
-    tfoot {
-        display: table-footer-group; /* Optional footer visibility */
-    }
-
-    /* Styling Links for Print */
-    a {
-        color: #000;
-        text-decoration: none; /* Remove link underlining for print */
-    }
+.customer-info, .order-summary {
+    padding: 5px; /* Smaller padding for sections in print */
+    font-size: 9pt; /* Reduce text size inside these sections */
+}
 }

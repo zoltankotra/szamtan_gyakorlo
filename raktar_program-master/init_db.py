@@ -40,12 +40,13 @@ def create_database():
 
     # Megrendelések tábla
     c.execute('''CREATE TABLE IF NOT EXISTS orders (
-                    id INTEGER PRIMARY KEY,
+                    id INTEGER,
                     customer_id INTEGER,
                     cikkszam TEXT,
                     mennyiseg INTEGER,
                     lezarva INTEGER DEFAULT 0,
                     teljesitve INTEGER DEFAULT 0,
+                    PRIMARY KEY(id, cikkszam),
                     FOREIGN KEY(customer_id) REFERENCES customers(id),
                     FOREIGN KEY(cikkszam) REFERENCES products(cikkszam))''')
 
@@ -55,11 +56,11 @@ def create_database():
 # A database létrehozása, ha még nem létezik
 create_database()
 
-# Figyelem: Ez törli a 'products' táblát, és minden adatot!
+# Figyelem: Ez törli a megadott táblát, és minden adatot!
 def drop_table():
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute('DROP TABLE IF EXISTS orders')
+    c.execute('DROP TABLE IF EXISTS stock')
     conn.commit()
     conn.close()
 

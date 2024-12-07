@@ -37,13 +37,15 @@
                 <tr>
                     <th>Lokáció</th>
                     <th>Mennyiség</th>
+                    <th>Szabad készlet</th>
                 </tr>
             </thead>
             <tbody>
                 {% for item in stock %}
                 <tr>
                     <td>{{ item.lokacio }}</td>
-                    <td>{{ item.mennyiseg }}</td>
+                    <td>{{ item.total_mennyiseg }}</td>
+                    <td>{{ item.mennyiseg_null }}</td>
                 </tr>
                 {% endfor %}
             </tbody>

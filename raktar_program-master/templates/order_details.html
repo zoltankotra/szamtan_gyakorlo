@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rendelés Részletei</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/print.css') }}">
+</head>
+<body>
+    <h1>Rendelés Részletei</h1>
+
+    <!-- Customer and Order Summary -->
+    <div class="summary-container">
+        <!-- Customer Information -->
+        <div class="customer-info">
+            <h2>Ügyfél Információ</h2>
+            <p><strong>Név:</strong> {{ order_info['customer_name'] }}</p>
+            <p><strong>Email:</strong> {{ order_info['customer_email'] }}</p>
+        </div>
+    
+        <!-- Order Summary -->
+        <div class="order-summary">
+            <h2>Rendelés Összegzése</h2>
+            <p><strong>Rendelési Szám:</strong> {{ order_info['order_id'] }}</p>
+            <p><strong>Teljes Ár:</strong> {{ order_info['total_price'] }} Ft</p>
+            <p><strong>Teljes Súly:</strong> {{ order_info['total_weight'] }} kg</p>
+        </div>
+    </div>
+    
+
+    <!-- Product Table -->
+    <div>
+        <h2>Termékek</h2>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Cikkszám</th>
+                    <th>Termék Név</th>
+                    <th>Egységár</th>
+                    <th>Mennyiség</th>
+                    <th>Ár</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in product_details %}
+                <tr>
+                    <td>{{ product['cikkszam'] }}</td>
+                    <td>{{ product['product_name'] }}</td>
+                    <td>{{ product['price'] }} Ft</td>
+                    
+                    <td>{{ product['quantity'] }} db</td>
+                    <td>{{ product['price'] * product['quantity']}} Ft</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <a href="{{ url_for('orders') }}">Vissza a rendelés listához</a>
+</body>
+</html>
