@@ -162,7 +162,7 @@ button {
     text-decoration: none; /* Link aláhúzás eltávolítása */
 }
 
-a button:hover {
+button:hover {
     background-color: #005a9e;
 }
 
@@ -203,7 +203,7 @@ th a {
 
 td {
     padding: 3px 10px;
-    text-align: left;
+    text-align: center;
 }
 
 tr:nth-child(even) {
