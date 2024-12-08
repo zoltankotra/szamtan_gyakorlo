@@ -682,8 +682,8 @@ def product_details(cikkszam):
                             FROM stock s
                             WHERE s.cikkszam = ? AND s.lokacio = stock.lokacio  AND s.order_id IS NULL) AS mennyiseg_null
                             FROM products JOIN stock ON stock.cikkszam = products.cikkszam
-                            WHERE stock.order_id IS NULL AND total_mennyiseg IS NOT NULL''',
-        (cikkszam, cikkszam)
+                            WHERE stock.order_id IS NULL AND total_mennyiseg IS NOT NULL AND stock.cikkszam = ?''',
+        (cikkszam, cikkszam, cikkszam)
     ).fetchall()
     conn.close()
 
