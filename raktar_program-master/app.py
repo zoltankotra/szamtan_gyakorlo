@@ -283,9 +283,7 @@ def orders():
     orders = conn.execute(f'''
         SELECT 
             orders.id AS order_id, 
-            customers.nev AS customer_name, 
-            SUM(orders.mennyiseg) AS total_quantity, 
-            SUM(orders.mennyiseg * products.suly) AS total_weight,
+            customers.nev AS customer_name,
             orders.lezarva, 
             orders.teljesitve
         FROM orders
@@ -315,8 +313,6 @@ def orders():
     columns = [
         {"name": "order_id", "label": "Order ID"},
         {"name": "customer_name", "label": "Megrendelő"},
-        {"name": "total_quantity", "label": "Mennyiség"},
-        {"name": "total_weight", "label": "Összsúly"},
         {"name": "orders.lezarva", "label": "Lezárva"},
         {"name": "orders.teljesitve", "label": "Teljesítve"}
     ]

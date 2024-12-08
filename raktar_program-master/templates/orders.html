@@ -61,8 +61,6 @@
                         </a>
                     </td>
                     <td>{{ order.customer_name }}</td>
-                    <td>{{ order.total_quantity }}</td>
-                    <td>{{ order.total_weight }}</td>
                     <!-- Lezárva oszlop -->
                     <td>
                         <form action="{{ url_for('update_order_status', order_id=order.order_id) }}" method="POST" class="nem">
