@@ -470,44 +470,6 @@ def add_order():
     return render_template('add_order.html')
 
 
-
-
-
-
-@app.route('/delete_order/<int:order_id>', methods=['POST'])
-def delete_order(order_id):
-    conn = get_db_connection()
-
-    try:
-        # Fetch the stock items associated with the order
-        allocated_stock = conn.execute('''
-            SELECT id, mennyiseg, cikkszam, lokacio
-            FROM stock
-            WHERE order_id = ?
-        ''', (order_id,)).fetchall()
-
-        # Restore the stock by setting order_id to NULL
-        for stock_item in allocated_stock:
-            conn.execute('''
-                UPDATE stock
-                SET order_id = NULL
-                WHERE id = ?
-            ''', (stock_item['id'],))
-
-        # Delete the order
-        conn.execute('DELETE FROM orders WHERE id = ?', (order_id,))
-        conn.commit()
-        flash('Megrendelés sikeresen törölve és a készlet visszaállítva!', 'success')
-    except Exception as e:
-        conn.rollback()
-        flash(f'Hiba történt a törlés során: {str(e)}', 'error')
-    finally:
-        conn.close()
-
-    return redirect(url_for('orders'))
-
-
-
 @app.route('/update_order_status/<int:order_id>', methods=['POST'])
 def update_order_status(order_id):
     lezarva = 'lezarva' in request.form
@@ -582,6 +544,33 @@ def stock():
                             ORDER BY {order_by} {descending} 
                             LIMIT ? OFFSET ?''', (per_page, offset) ).fetchall()
     total_products = conn.execute('SELECT COUNT(*) FROM stock').fetchone()[0]
+
+    conn.execute('''
+        DELETE FROM stock
+        WHERE id IN (
+            SELECT stock.id
+            FROM stock
+            LEFT JOIN products ON stock.cikkszam = products.cikkszam
+            LEFT JOIN orders o ON stock.order_id = o.id
+            WHERE (
+                SELECT SUM(s.mennyiseg) 
+                FROM stock s
+                LEFT JOIN orders o_sub ON s.order_id = o_sub.id
+                WHERE s.cikkszam = stock.cikkszam 
+                AND s.lokacio = stock.lokacio
+                AND (o_sub.teljesitve IS NULL OR o_sub.teljesitve = 0)
+            ) IS NULL OR (
+                SELECT SUM(s.mennyiseg) 
+                FROM stock s
+                LEFT JOIN orders o_sub ON s.order_id = o_sub.id
+                WHERE s.cikkszam = stock.cikkszam 
+                AND s.lokacio = stock.lokacio
+                AND (o_sub.teljesitve IS NULL OR o_sub.teljesitve = 0)
+            ) = 0
+        )
+    ''')
+
+    conn.commit()
     conn.close()
 
     total_pages = (total_products + per_page - 1) // per_page  # Összes oldal száma
@@ -693,7 +682,7 @@ def product_details(cikkszam):
                             FROM stock s
                             WHERE s.cikkszam = ? AND s.lokacio = stock.lokacio  AND s.order_id IS NULL) AS mennyiseg_null
                             FROM products JOIN stock ON stock.cikkszam = products.cikkszam
-                            WHERE stock.order_id IS NULL''',
+                            WHERE stock.order_id IS NULL AND total_mennyiseg IS NOT NULL''',
         (cikkszam, cikkszam)
     ).fetchall()
     conn.close()
