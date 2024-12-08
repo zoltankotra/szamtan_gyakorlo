@@ -48,7 +48,6 @@
                         </a>
                     </th>
                     {% endfor %}
-                    <th>Akciók</th>
                     
                 </tr>
             </thead>
@@ -69,12 +68,6 @@
                     <td>{{ item.lokacio }}</td>
                     <td>{{ item.total_mennyiseg }}</td>
                     <td>{{ item.mennyiseg_null }}</td>
-                    <td>
-                        <!-- Törlés gomb -->
-                        <form action="{{ url_for('delete_stock', stock_id=item.id) }}" method="POST" style="display:inline;">
-                            <button type="submit" onclick="return confirm('Biztosan törli a rekordot?');">Törlés</button>
-                        </form>
-                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
