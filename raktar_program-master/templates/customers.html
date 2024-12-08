@@ -33,7 +33,7 @@
             <button>Új ügyfél hozzáadása</button>
         </a>
         <div class="dropdown">
-            <button class="dropbtn">Rows Per Page: {{ query_params['per_page'] }}</button>
+            <button class="dropbtn">Sorok száma: {{ query_params['per_page'] }}</button>
             <div class="dropdown-content">
                 {% for size in [5, 10, 20, 50, 100] %}
                 <a href="{{ url_for('customers', **dict(query_params, per_page=size, page=1)) }}">{{ size }}</a>
