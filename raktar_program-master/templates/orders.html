@@ -56,10 +56,15 @@
                 {% for order in orders %}
                 <tr>
                     <td>
+                        {% if not order.teljesitve %}
                         <a href="{{ url_for('order_details', order_id=order.order_id) }}">
                             {{ order.order_id }}
                         </a>
+                        {% else %}
+                        {{ order.order_id }}
+                        {% endif %}
                     </td>
+
                     <td>{{ order.customer_name }}</td>
                     <!-- Lezárva oszlop -->
                     <td>
