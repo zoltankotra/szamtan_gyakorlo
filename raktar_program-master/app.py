@@ -111,10 +111,23 @@ def add_product():
 def delete_product(product_id):
     conn = get_db_connection()
 
-    # Töröljük a terméket a products táblából az adott id alapján
+    # Check if the product exists in the stock table with non-zero quantity
+    stock_check = conn.execute('''
+        SELECT COUNT(*) as count
+        FROM stock
+        WHERE cikkszam = (SELECT cikkszam FROM products WHERE id = ?) AND mennyiseg > 0
+    ''', (product_id,)).fetchone()
+
+    if stock_check['count'] > 0:
+        # If the product is in stock, prevent deletion
+        conn.close()
+        flash("A termék nem törölhető, mert még van készleten!", "error")
+        return redirect(url_for('products'))
+
+    # If the product is not in stock, proceed with deletion
     conn.execute('DELETE FROM products WHERE id = ?', (product_id,))
 
-    # Eltávolítjuk a terméket a stock táblából is, ha létezik
+    # Also remove the product from the stock table, if it exists
     conn.execute('DELETE FROM stock WHERE cikkszam = (SELECT cikkszam FROM products WHERE id = ?)', (product_id,))
 
     conn.commit()
@@ -122,6 +135,7 @@ def delete_product(product_id):
 
     flash("A termék sikeresen törölve lett!", "success")
     return redirect(url_for('products'))
+
 
 
 @app.route('/customers', methods=['GET'])
@@ -329,9 +343,9 @@ def add_order():
 
             if order_id:
                 # Check if the order ID exists and belongs to the customer
-                existing_order = conn.execute('SELECT id FROM orders WHERE id = ? AND customer_id = ?', (order_id, customer_id)).fetchone()
+                existing_order = conn.execute('SELECT id FROM orders WHERE id = ? AND customer_id = ? AND (teljesitve = 0 OR teljesitve IS NULL)', (order_id, customer_id)).fetchone()
                 if not existing_order:
-                    flash('Hiba: A megadott rendelési szám nem létezik vagy nem tartozik ehhez az ügyfélhez!', 'error')
+                    flash('Hiba: A megadott rendelési szám nem aktív vagy nem tartozik ehhez az ügyfélhez!', 'error')
                     conn.close()
                     return redirect(url_for('add_order'))
 
@@ -473,65 +487,6 @@ def update_order_status(order_id):
         conn.close()
         return redirect(url_for('orders'))
 
-    if teljesitve:
-        # Fetch all products related to the order
-        order_lines = conn.execute('''
-            SELECT cikkszam, mennyiseg
-            FROM orders
-            WHERE id = ?
-        ''', (order_id,)).fetchall()
-
-        insufficient_stock = False
-
-        for line in order_lines:
-            cikkszam = line['cikkszam']
-            mennyiseg = line['mennyiseg']
-
-            # Get all stock locations for the product
-            stocks = conn.execute('''
-                SELECT id, lokacio, mennyiseg
-                FROM stock
-                WHERE cikkszam = ? AND order_id IS NULL
-                ORDER BY mennyiseg DESC
-            ''', (cikkszam,)).fetchall()
-
-            remaining_quantity = mennyiseg
-
-            for stock in stocks:
-                if remaining_quantity <= 0:
-                    break  # Exit loop if the quantity is satisfied
-
-                stock_quantity = stock['mennyiseg']
-                quantity_to_deduct = min(stock_quantity, remaining_quantity)
-
-                # Deduct the necessary quantity from stock
-                conn.execute('''
-                    UPDATE stock
-                    SET mennyiseg = mennyiseg - ?
-                    WHERE id = ?
-                ''', (quantity_to_deduct, stock['id']))
-                remaining_quantity -= quantity_to_deduct
-
-                # Remove stock row if the quantity becomes zero
-                conn.execute('''
-                    DELETE FROM stock
-                    WHERE id = ? AND mennyiseg = 0
-                ''', (stock['id'],))
-
-            if remaining_quantity > 0:
-                # If there's still an unmet quantity, flag insufficient stock
-                insufficient_stock = True
-
-        if insufficient_stock:
-            flash('Nincs elegendő készlet a raktárban a megrendelés teljesítéséhez!', 'error')
-            conn.rollback()  # Undo changes
-            conn.close()
-            return redirect(url_for('orders'))
-
-        # If all products were successfully subtracted
-        conn.commit()
-        flash('Megrendelés sikeresen teljesítve és a raktárkészlet frissítve!', 'success')
-
     # Update the order status
     conn.execute('''
         UPDATE orders
@@ -565,18 +520,32 @@ def stock():
         descending = ''
 
     conn = get_db_connection()
-    stock = conn.execute(f'''SELECT stock.id, products.cikkszam, products.nev, stock.lokacio, 
-                            (SELECT SUM(mennyiseg) 
-                            FROM stock s 
-                            WHERE s.cikkszam = stock.cikkszam AND s.lokacio = stock.lokacio) AS total_mennyiseg,
-                            (SELECT SUM(mennyiseg) 
-                            FROM stock s 
-                            WHERE s.cikkszam = stock.cikkszam AND s.lokacio = stock.lokacio  AND s.order_id IS NULL) AS mennyiseg_null
+    stock = conn.execute(f'''SELECT 
+                                stock.id, 
+                                products.cikkszam, 
+                                products.nev, 
+                                stock.lokacio, 
+                                (
+                                    SELECT SUM(s.mennyiseg) 
+                                    FROM stock s 
+                                    LEFT JOIN orders o ON s.order_id = o.id
+                                    WHERE s.cikkszam = stock.cikkszam 
+                                    AND s.lokacio = stock.lokacio 
+                                    AND (o.teljesitve IS NULL OR o.teljesitve == 0)
+                                ) AS total_mennyiseg,
+                                (
+                                    SELECT SUM(s.mennyiseg) 
+                                    FROM stock s 
+                                    LEFT JOIN orders o ON s.order_id = o.id
+                                    WHERE s.cikkszam = stock.cikkszam 
+                                    AND s.lokacio = stock.lokacio 
+                                    AND s.order_id IS NULL
+                                ) AS mennyiseg_null
                             FROM stock
                             JOIN products ON stock.cikkszam = products.cikkszam
                             WHERE stock.order_id IS NULL
-                            ORDER BY {order_by} {descending} LIMIT ? OFFSET ?
-    ''', (per_page, offset) ).fetchall()
+                            ORDER BY {order_by} {descending} 
+                            LIMIT ? OFFSET ?''', (per_page, offset) ).fetchall()
     total_products = conn.execute('SELECT COUNT(*) FROM stock').fetchone()[0]
     conn.close()
 
@@ -728,11 +697,13 @@ def order_details(order_id):
             products.cikkszam,
             products.ar AS price,
             products.suly AS weight,
-            orders.mennyiseg AS quantity
-        FROM orders
-        JOIN products ON orders.cikkszam = products.cikkszam
-        WHERE orders.id = ?
+            stock.mennyiseg AS quantity,
+            stock.lokacio AS lokacio
+        FROM stock
+        JOIN products ON stock.cikkszam = products.cikkszam
+        WHERE stock.order_id = ?
     ''', (order_id,)).fetchall()
+
 
     conn.close()
 
