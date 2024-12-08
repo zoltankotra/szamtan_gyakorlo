@@ -229,15 +229,31 @@ def add_customer():
 @app.route('/delete_customer/<email>', methods=['POST'])
 def delete_customer(email):
     conn = get_db_connection()
+    
+    # Fetch customer details
     customer = conn.execute('SELECT * FROM customers WHERE email = ?', (email,)).fetchone()
-    if customer:
-        conn.execute('DELETE FROM customers WHERE email = ?', (email,))
-        conn.commit()
-        flash('Ügyfél sikeresen törölve!', 'success')
-    else:
+    if not customer:
         flash('A törlés nem sikerült, ügyfél nem található!', 'error')
+        conn.close()
+        return redirect(url_for('customers'))
 
+    # Check for active orders
+    active_orders = conn.execute('''
+        SELECT id 
+        FROM orders 
+        WHERE customer_id = ? AND teljesitve = 0
+    ''', (customer['id'],)).fetchall()
+
+    if active_orders:
+        flash('Nem lehet törölni az ügyfelet, mert van befejezetlen rendelése!', 'error')
+        conn.close()
+        return redirect(url_for('customers'))
+
+    # Proceed to delete the customer
+    conn.execute('DELETE FROM customers WHERE email = ?', (email,))
+    conn.commit()
     conn.close()
+    flash('Ügyfél sikeresen törölve!', 'success')
     return redirect(url_for('customers'))
 
 
@@ -531,7 +547,7 @@ def stock():
                                     LEFT JOIN orders o ON s.order_id = o.id
                                     WHERE s.cikkszam = stock.cikkszam 
                                     AND s.lokacio = stock.lokacio 
-                                    AND (o.teljesitve IS NULL OR o.teljesitve == 0)
+                                    AND (o.teljesitve IS NULL OR o.teljesitve = 0)
                                 ) AS total_mennyiseg,
                                 (
                                     SELECT SUM(s.mennyiseg) 
