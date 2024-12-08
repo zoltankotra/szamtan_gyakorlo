@@ -364,23 +364,6 @@ def add_order():
                     flash('Hiba: A megadott rendelési szám nem aktív vagy nem tartozik ehhez az ügyfélhez!', 'error')
                     conn.close()
                     return redirect(url_for('add_order'))
-
-                # Check if the product is already in the order
-                product_in_order = conn.execute('SELECT mennyiseg FROM orders WHERE id = ? AND cikkszam = ?', (order_id, cikkszam)).fetchone()
-                if product_in_order:
-                    # Update the quantity if the product already exists in the order
-                    new_quantity = product_in_order['mennyiseg'] + mennyiseg
-                    conn.execute('''
-                        UPDATE orders
-                        SET mennyiseg = ?
-                        WHERE id = ? AND cikkszam = ?
-                    ''', (new_quantity, order_id, cikkszam))
-                else:
-                    # Add a new product to the existing order
-                    conn.execute('''
-                        INSERT INTO orders (id, customer_id, cikkszam, mennyiseg, lezarva, teljesitve)
-                        VALUES (?, ?, ?, ?, ?, ?)
-                    ''', (order_id, customer_id, cikkszam, mennyiseg, lezarva, teljesitve))
             else:
                 # Generate a new unique order_id
                 order_id = conn.execute('SELECT IFNULL(MAX(id), 0) + 1 AS new_order_id FROM orders').fetchone()['new_order_id']
@@ -391,7 +374,7 @@ def add_order():
 
             # Get total available stock with order_id IS NULL
             available_stock = conn.execute('''
-                SELECT id, mennyiseg
+                SELECT id, cikkszam, mennyiseg, lokacio
                 FROM stock
                 WHERE cikkszam = ? AND order_id IS NULL
                 ORDER BY mennyiseg DESC
@@ -415,14 +398,31 @@ def add_order():
                             WHERE id = ?
                         ''', (stock_item['id'],))
 
-                        # Add a new row for the reserved stock with the new order_id
-                        conn.execute('''
-                            INSERT INTO stock (cikkszam, lokacio, mennyiseg, order_id)
-                            SELECT cikkszam, lokacio, ?, ?
+                        # Check if the cikkszam, lokacio, and order_id combination already exists
+                        existing_stock = conn.execute('''
+                            SELECT mennyiseg
                             FROM stock
-                            WHERE id = ?
-                        ''', (stock_item['mennyiseg'], order_id, stock_item['id']))
+                            WHERE cikkszam = ? AND lokacio = ? AND order_id = ?
+                        ''', (stock_item['cikkszam'], stock_item['lokacio'], order_id)).fetchone()
+
+                        if existing_stock:
+                            # Update the quantity if the combination exists
+                            new_quantity = existing_stock['mennyiseg'] + stock_item['mennyiseg']
+                            conn.execute('''
+                                UPDATE stock
+                                SET mennyiseg = ?
+                                WHERE cikkszam = ? AND lokacio = ? AND order_id = ?
+                            ''', (new_quantity, stock_item['cikkszam'], stock_item['lokacio'], order_id))
+                        else:
+                            # Add a new row if the combination does not exist
+                            conn.execute('''
+                                INSERT INTO stock (cikkszam, lokacio, mennyiseg, order_id)
+                                VALUES (?, ?, ?, ?)
+                            ''', (stock_item['cikkszam'], stock_item['lokacio'], stock_item['mennyiseg'], order_id))
+
+                        # Deduct the stock item quantity from the remaining quantity
                         remaining_quantity -= stock_item['mennyiseg']
+
                     else:
                         # Deduct partial stock and update remaining stock
                         conn.execute('''
@@ -430,14 +430,37 @@ def add_order():
                             SET mennyiseg = mennyiseg - ?
                             WHERE id = ?
                         ''', (remaining_quantity, stock_item['id']))
-                        # Insert new stock entry with assigned order_id
-                        conn.execute('''
-                            INSERT INTO stock (cikkszam, lokacio, mennyiseg, order_id)
-                            SELECT cikkszam, lokacio, ?, ?
+                        # Check if the cikkszam, lokacio, and order_id combination already exists
+                        existing_stock = conn.execute('''
+                            SELECT mennyiseg
                             FROM stock
-                            WHERE id = ?
-                        ''', (remaining_quantity, order_id, stock_item['id']))
+                            WHERE cikkszam = (SELECT cikkszam FROM stock WHERE id = ?)
+                            AND lokacio = (SELECT lokacio FROM stock WHERE id = ?)
+                            AND order_id = ?
+                        ''', (stock_item['id'], stock_item['id'], order_id)).fetchone()
+
+                        if existing_stock:
+                            # Update the quantity if the combination exists
+                            new_quantity = existing_stock['mennyiseg'] + remaining_quantity
+                            conn.execute('''
+                                UPDATE stock
+                                SET mennyiseg = ?
+                                WHERE cikkszam = (SELECT cikkszam FROM stock WHERE id = ?)
+                                AND lokacio = (SELECT lokacio FROM stock WHERE id = ?)
+                                AND order_id = ?
+                            ''', (new_quantity, stock_item['id'], stock_item['id'], order_id))
+                        else:
+                            # Add a new row if the combination does not exist
+                            conn.execute('''
+                                INSERT INTO stock (cikkszam, lokacio, mennyiseg, order_id)
+                                SELECT cikkszam, lokacio, ?, ?
+                                FROM stock
+                                WHERE id = ?
+                            ''', (remaining_quantity, order_id, stock_item['id']))
+
+                        # Deduct remaining quantity as it has been fully assigned
                         remaining_quantity = 0
+
 
                 conn.commit()
                 if request.form.get('order_id'):
