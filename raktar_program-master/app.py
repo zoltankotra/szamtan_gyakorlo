@@ -741,6 +741,7 @@ def order_details(order_id):
         FROM stock
         JOIN products ON stock.cikkszam = products.cikkszam
         WHERE stock.order_id = ?
+        ORDER BY lokacio
     ''', (order_id,)).fetchall()
 
 
