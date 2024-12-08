@@ -1,6 +1,18 @@
 
 
 import sqlite3
+# Figyelem: Ez törli a megadott táblát, és minden adatot!
+def drop_table():
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute('DROP TABLE IF EXISTS stock')
+    c.execute('DROP TABLE IF EXISTS orders')
+    c.execute('DROP TABLE IF EXISTS products')
+    conn.commit()
+    conn.close()
+
+# Csak akkor használd, ha a tábla törlésére van szükséged.
+drop_table()
 
 # Ügyfelek, Megrendelések és egyéb táblák létrehozása
 def create_database():
@@ -11,8 +23,8 @@ def create_database():
     c.execute('''CREATE TABLE IF NOT EXISTS products (
                     id INTEGER PRIMARY KEY,
                     cikkszam TEXT UNIQUE,
-                    egyseg_vonalkod INTEGER UNIQUE,
-                    gyujto_vonalkod INTEGER UNIQUE,
+                    egyseg_vonalkod INTEGER ,
+                    gyujto_vonalkod INTEGER ,
                     nev TEXT,
                     ar REAL,
                     suly REAL,
@@ -56,14 +68,4 @@ def create_database():
 # A database létrehozása, ha még nem létezik
 create_database()
 
-# Figyelem: Ez törli a megadott táblát, és minden adatot!
-def drop_table():
-    conn = sqlite3.connect('database.db')
-    c = conn.cursor()
-    c.execute('DROP TABLE IF EXISTS stock')
-    c.execute('DROP TABLE IF EXISTS orders')
-    conn.commit()
-    conn.close()
 
-# Csak akkor használd, ha a tábla törlésére van szükséged.
-#drop_table()

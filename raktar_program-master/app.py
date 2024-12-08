@@ -82,9 +82,19 @@ def add_product():
         egyseg_vonalkod = request.form['egyseg_vonalkod']
         gyujto_vonalkod = request.form['gyujto_vonalkod']
         nev = request.form['nev']
-        ar = request.form['ar']
-        suly = request.form['suly']
+        try:
+            ar = float(request.form['ar'])  # Konvertálás számértékre
+            suly = float(request.form['suly'])  # Konvertálás számértékre
+        except ValueError:
+            flash("Az árnak és a súlynak számnak kell lennie!", "error")
+            return redirect(url_for('add_product'))
+
         kategoria = request.form['kategoria']
+
+        # Ellenőrzés: az ár és a súly nem lehet 0 vagy negatív
+        if ar <= 0 or suly <= 0:
+            flash("Az ár és a súly értéke nem lehet 0 vagy negatív!", "error")
+            return redirect(url_for('add_product'))
 
         # Ellenőrizzük, hogy a cikkszám már létezik-e
         conn = get_db_connection()
@@ -105,7 +115,6 @@ def add_product():
         return redirect(url_for('products'))
 
     return render_template('add_product.html')
-
 
 @app.route('/delete_product/<int:product_id>', methods=['POST'])
 def delete_product(product_id):
@@ -704,17 +713,15 @@ def order_details(order_id):
     order_info = conn.execute('''
         SELECT SUM(stock.mennyiseg) AS total_quant,
                               SUM(products.ar * stock.mennyiseg) AS total_price,
-                              SUM(products.suly * stock.mennyiseg) AS total_weight,
-                              customers.nev AS nev,
-                              customers.email AS email,
-                              order_id
+                              SUM(products.suly * stock.mennyiseg) AS total_weight
         FROM stock LEFT JOIN products ON stock.cikkszam = products.cikkszam
                               LEFT JOIN orders ON stock.cikkszam = orders.cikkszam
                               LEFT JOIN customers ON customers.id = orders.customer_id
         WHERE order_id = ?
+        
+
+
     ''', (order_id,)).fetchone()
-
-
 
     # Get product details for the order
     product_details = conn.execute('''
