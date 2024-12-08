@@ -61,6 +61,7 @@ def drop_table():
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
     c.execute('DROP TABLE IF EXISTS stock')
+    c.execute('DROP TABLE IF EXISTS orders')
     conn.commit()
     conn.close()
 

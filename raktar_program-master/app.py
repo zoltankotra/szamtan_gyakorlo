@@ -388,10 +388,11 @@ def add_order():
                         # Add a new row for the reserved stock with the new order_id
                         conn.execute('''
                             INSERT INTO stock (cikkszam, lokacio, mennyiseg, order_id)
-                            SELECT cikkszam, lokacio, mennyiseg, ?
+                            SELECT cikkszam, lokacio, ?, ?
                             FROM stock
                             WHERE id = ?
-                        ''', (order_id, stock_item['id']))
+                        ''', (stock_item['mennyiseg'], order_id, stock_item['id']))
+                        remaining_quantity -= stock_item['mennyiseg']
                     else:
                         # Deduct partial stock and update remaining stock
                         conn.execute('''
@@ -623,28 +624,30 @@ def add_stock():
 
         conn = get_db_connection()
 
-        # Ellenőrizzük, hogy létezik-e a cikkszám a products táblában
+        # Check if the product exists in the products table
         product_exists = conn.execute('SELECT * FROM products WHERE cikkszam = ?', (cikkszam,)).fetchone()
 
         if not product_exists:
-            # Ha a cikkszám nem létezik a termékek táblában
+            # If the cikkszam doesn't exist in the products table
             flash("Hibás cikkszám! Ez a termék nem létezik.", "error")
             conn.close()
             return redirect(url_for('stock'))
 
-        # Ellenőrizzük, hogy létezik-e már a cikkszám és lokáció kombináció a stock táblában
-        existing_stock = conn.execute('SELECT * FROM stock WHERE cikkszam = ? AND lokacio = ?',
-                                      (cikkszam, lokacio)).fetchone()
+
+        # If order_id is NULL, check only cikkszam and lokacio
+        existing_stock = conn.execute('SELECT * FROM stock WHERE cikkszam = ? AND lokacio = ? AND order_id IS NULL',
+                                    (cikkszam, lokacio)).fetchone()
+
 
         if existing_stock:
-            # Ha létezik, növeljük a mennyiséget
+            # If it exists, increase the quantity
             new_mennyiseg = existing_stock['mennyiseg'] + mennyiseg
-            conn.execute('UPDATE stock SET mennyiseg = ? WHERE cikkszam = ? AND lokacio = ?',
+            conn.execute('UPDATE stock SET mennyiseg = ? WHERE cikkszam = ? AND lokacio = ? AND order_id IS NULL',
                          (new_mennyiseg, cikkszam, lokacio))
             flash("A mennyiség frissítve lett!", "success")
         else:
-            # Ha nem létezik, új rekordot adunk hozzá
-            conn.execute('INSERT INTO stock (cikkszam, lokacio, mennyiseg) VALUES (?, ?, ?)',
+            # If not, add a new record
+            conn.execute('INSERT INTO stock (cikkszam, lokacio, mennyiseg, order_id) VALUES (?, ?, ?, NULL)',
                          (cikkszam, lokacio, mennyiseg))
             flash("Új termék hozzáadva a raktárhoz!", "success")
 
@@ -653,6 +656,7 @@ def add_stock():
         return redirect(url_for('stock'))
 
     return render_template('add_stock.html')
+
 
 
 
@@ -684,7 +688,8 @@ def product_details(cikkszam):
                             (SELECT SUM(mennyiseg) 
                             FROM stock s
                             WHERE s.cikkszam = ? AND s.lokacio = stock.lokacio  AND s.order_id IS NULL) AS mennyiseg_null
-                            FROM products JOIN stock ON stock.cikkszam = products.cikkszam''',
+                            FROM products JOIN stock ON stock.cikkszam = products.cikkszam
+                            WHERE stock.order_id IS NULL''',
         (cikkszam, cikkszam)
     ).fetchall()
     conn.close()
