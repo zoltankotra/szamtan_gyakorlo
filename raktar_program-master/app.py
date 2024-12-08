@@ -704,15 +704,17 @@ def order_details(order_id):
     order_info = conn.execute('''
         SELECT SUM(stock.mennyiseg) AS total_quant,
                               SUM(products.ar * stock.mennyiseg) AS total_price,
-                              SUM(products.suly * stock.mennyiseg) AS total_weight
+                              SUM(products.suly * stock.mennyiseg) AS total_weight,
+                              customers.nev AS nev,
+                              customers.email AS email,
+                              order_id
         FROM stock LEFT JOIN products ON stock.cikkszam = products.cikkszam
                               LEFT JOIN orders ON stock.cikkszam = orders.cikkszam
                               LEFT JOIN customers ON customers.id = orders.customer_id
         WHERE order_id = ?
-        
-
-
     ''', (order_id,)).fetchone()
+
+
 
     # Get product details for the order
     product_details = conn.execute('''
