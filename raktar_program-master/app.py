@@ -550,7 +550,7 @@ def stock():
     order_by = str(request.args.get('order_by', 'products.cikkszam'))
     desc = request.args.get('desc', 'false').lower() in ('true', '1')
 
-    valid_columns = {'stock.id', 'products.cikkszam', 'products.nev', 'stock.lokacio', 'stock.mennyiseg'}
+    valid_columns = {'stock.id', 'products.cikkszam', 'products.nev', 'stock.lokacio', 'total_mennyiseg', 'mennyiseg_null'}
     if order_by not in valid_columns:
         raise ValueError("Invalid column name for ordering.") #Elkerüljük az SQL injection-t
     if desc:
@@ -717,16 +717,16 @@ def order_details(order_id):
 
     # Get order and customer information
     order_info = conn.execute('''
-        SELECT 
-            orders.id AS order_id,
-            customers.nev AS customer_name,
-            customers.email AS customer_email,
-            SUM(products.ar * orders.mennyiseg) AS total_price,
-            SUM(products.suly * orders.mennyiseg) AS total_weight
-        FROM orders
-        JOIN customers ON orders.customer_id = customers.id
-        JOIN products ON orders.cikkszam = products.cikkszam
-        WHERE orders.id = ?
+        SELECT SUM(stock.mennyiseg) AS total_quant,
+                              SUM(products.ar * stock.mennyiseg) AS total_price,
+                              SUM(products.suly * stock.mennyiseg) AS total_weight
+        FROM stock LEFT JOIN products ON stock.cikkszam = products.cikkszam
+                              LEFT JOIN orders ON stock.cikkszam = orders.cikkszam
+                              LEFT JOIN customers ON customers.id = orders.customer_id
+        WHERE order_id = ?
+        
+
+
     ''', (order_id,)).fetchone()
 
     # Get product details for the order
