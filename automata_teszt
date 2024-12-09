@@ -1,0 +1,123 @@
+import sqlite3
+import pytest
+from app import get_db_connection, app
+
+
+def test_get_db_connection():
+    # Próbáljon meg kapcsolódni az adatbázishoz
+    conn = get_db_connection()
+    assert conn is not None, "A kapcsolat nem jött létre."
+
+    # Ellenőrizze, hogy valóban tud-e kérdéseket futtatni az adatbázisban
+    cursor = conn.cursor()
+    cursor.execute("SELECT 1")  # Egyszerű lekérdezés
+    assert cursor.fetchone()[0] == 1, "Az adatbázis nem ad vissza helyes eredményt."
+
+    # Zárja be a kapcsolatot
+    conn.close()
+
+    # A kapcsolat lezárásának ellenőrzése (nem közvetlen attribútummal)
+    try:
+        conn.execute("SELECT 1")  # Ez hibaüzenetet kell dobjon, mert a kapcsolat zárva van
+        assert False, "A kapcsolatot nem sikerült lezárni."
+    except sqlite3.ProgrammingError:
+        pass  # Ez a várt viselkedés
+
+
+@pytest.fixture
+def client():
+    app.config['TESTING'] = True
+    with app.test_client() as client:
+        yield client
+
+
+@pytest.fixture
+def setup_db():
+    # Teszt adatbázis létrehozása és ügyfelek hozzáadása
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Ügyfelek táblájának törlése és újbóli létrehozása
+    cursor.execute("DROP TABLE IF EXISTS customers")
+    cursor.execute('''CREATE TABLE IF NOT EXISTS customers (
+                        id INTEGER PRIMARY KEY,
+                        nev TEXT NOT NULL,
+                        iranyitoszam TEXT NOT NULL,
+                        varos TEXT NOT NULL,
+                        utca TEXT NOT NULL,
+                        hazszam TEXT NOT NULL,
+                        email TEXT NOT NULL UNIQUE)''')
+
+    # Ügyfelek hozzáadása
+    cursor.execute('''INSERT INTO customers (nev, iranyitoszam, varos, utca, hazszam, email) 
+                      VALUES ('John Doe', '1111', 'Budapest', 'Fő utca', '1', 'john@example.com')''')
+    cursor.execute('''INSERT INTO customers (nev, iranyitoszam, varos, utca, hazszam, email) 
+                      VALUES ('Jane Doe', '2222', 'Debrecen', 'Kossuth utca', '2', 'jane@example.com')''')
+
+    conn.commit()
+    conn.close()
+
+
+def test_customer_creation(setup_db):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Ellenőrizzük, hogy az ügyfelek ténylegesen bekerültek-e az adatbázisba
+    cursor.execute("SELECT * FROM customers WHERE nev = 'John Doe'")
+    customer = cursor.fetchone()
+    assert customer is not None, "John Doe nem található az adatbázisban."
+    assert customer[1] == 'John Doe', "A név nem megfelelő."
+
+    cursor.execute("SELECT * FROM customers WHERE nev = 'Jane Doe'")
+    customer = cursor.fetchone()
+    assert customer is not None, "Jane Doe nem található az adatbázisban."
+    assert customer[1] == 'Jane Doe', "A név nem megfelelő."
+
+    conn.close()
+
+
+def test_customer_update(setup_db):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Frissítés: Módosítsuk John Doe címét
+    cursor.execute("UPDATE customers SET varos = 'Pécs' WHERE nev = 'John Doe'")
+    conn.commit()
+
+    # Ellenőrizzük, hogy a frissítés megtörtént-e
+    cursor.execute("SELECT * FROM customers WHERE nev = 'John Doe'")
+    customer = cursor.fetchone()
+    assert customer[3] == 'Pécs', "A város frissítése nem történt meg."
+
+    conn.close()
+
+
+def test_customer_deletion(setup_db):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Törlés: Töröljük Jane Doe-t
+    cursor.execute("DELETE FROM customers WHERE nev = 'Jane Doe'")
+    conn.commit()
+
+    # Ellenőrizzük, hogy Jane Doe valóban törlődött
+    cursor.execute("SELECT * FROM customers WHERE nev = 'Jane Doe'")
+    customer = cursor.fetchone()
+    assert customer is None, "Jane Doe nem lett törölve az adatbázisból."
+
+    conn.close()
+
+
+def test_index(client):
+    # Küldjünk egy GET kérést a '/' végpontra
+    response = client.get('/')
+    assert response.status_code == 200, "Az index oldal nem érhető el."
+
+    # Ellenőrizzük, hogy a válasz tartalmazza az 'index.html' várt tartalmát
+    assert '<title>Raktárnyilvántartó</title>' in response.data.decode('utf-8'), "A HTML tartalom nem tartalmazza az elvárt elemeket."
+
+    # Ellenőrizzük az '/index' végpontot is
+    response = client.get('/index')
+    assert response.status_code == 200, "Az /index oldal nem érhető el."
+    assert '<title>Raktárnyilvántartó</title>' in response.data.decode('utf-8'), "Az /index oldal HTML tartalma nem megfelelő."
+
